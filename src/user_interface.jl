@@ -603,6 +603,16 @@ struct State{T}
     out::T
 end
 
+"""
+    Uncertain{T}
+
+A thin wrapper for JuMP variables that represent uncertain/random model
+parameters. Mirrors `State{T}` but contains a single `JuMP.VariableRef`.
+"""
+struct Uncertain{T}
+    var::T
+end
+
 mutable struct ObjectiveState{N}
     update::Function
     initial_value::NTuple{N,Float64}
@@ -649,6 +659,8 @@ mutable struct Node{T}
     parameterize::Function  # TODO(odow): make this a concrete type?
     # A list of the state variables in the model.
     states::Dict{Symbol,State{JuMP.VariableRef}}
+    # A list of uncertain variables (random parameters) in the model.
+    uncertainties::Dict{Symbol,Uncertain{JuMP.VariableRef}}
     # Stage objective
     stage_objective::Any  # TODO(odow): make this a concrete type?
     stage_objective_set::Bool
@@ -1010,6 +1022,7 @@ function PolicyGraph(
             Noise[],
             (ω) -> nothing,
             Dict{Symbol,State{JuMP.VariableRef}}(),
+            Dict{Symbol,Uncertain{JuMP.VariableRef}}(),
             0.0,
             false,
             # Delay initializing the bellman function until later so that it can

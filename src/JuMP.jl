@@ -42,6 +42,11 @@ struct StateInfo
     kwargs::Any
 end
 
+struct UncertainInfo
+    info::JuMP.VariableInfo
+    kwargs::Any
+end
+
 function JuMP.build_variable(
     _error::Function,
     info::JuMP.VariableInfo,
@@ -101,12 +106,53 @@ function JuMP.add_variable(
     return state
 end
 
+function JuMP.add_variable(
+    subproblem::JuMP.Model,
+    uncertain_info::UncertainInfo,
+    name::String,
+)
+    v = JuMP.add_variable(
+        subproblem,
+        JuMP.ScalarVariable(uncertain_info.info),
+        name,
+    )
+    node = get_node(subproblem)
+    sym_name = Symbol(name)
+    @assert !haskey(node.uncertainties, sym_name)  # prevent duplicate names
+    @assert !haskey(node.states, sym_name)  # do not clash with state names
+    u = Uncertain(v)
+    node.uncertainties[sym_name] = u
+    return u
+end
+
+function JuMP.build_variable(
+    _error::Function,
+    info::JuMP.VariableInfo,
+    ::Type{Uncertain};
+    kwargs...,
+)
+    # No special initial_value required for uncertain variables.
+    return UncertainInfo(info, kwargs)
+end
+
 function JuMP.value(state::State{JuMP.VariableRef})
     return State(JuMP.value(state.in), JuMP.value(state.out))
 end
 
+function JuMP.value(r::Uncertain{JuMP.VariableRef})
+    return Uncertain(JuMP.value(r.var))
+end
+
 # Overload for broadcast syntax such as `JuMP.value.([state_1, state_2])`.
 Broadcast.broadcastable(state::State{JuMP.VariableRef}) = Ref(state)
+
+# Overload broadcast for Random as well so `JuMP.value.` style works.
+Broadcast.broadcastable(r::Uncertain{JuMP.VariableRef}) = Ref(r)
+
+# Allow fixing an Uncertain wrapper by delegating to JuMP.fix on the inner VariableRef
+function JuMP.fix(r::Uncertain{JuMP.VariableRef}, value)
+    return JuMP.fix(r.var, value)
+end
 
 # ==============================================================================
 
