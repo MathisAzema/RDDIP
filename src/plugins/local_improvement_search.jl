@@ -75,14 +75,19 @@ function minimize(
     αₖ = 1.0
     # Evaluation counter
     evals = Ref(bfgs.evaluation_limit)
+    s = 0
     while true
+        s += 1
+        # println((s,fₖ, ∇fₖ))
         # Search direction. We could be clever here and maintain B⁻¹, but we're
         # only ever going to be solving this for very small |x| << 100 problems,
         # so taking the linear solve every time is okay. (The MIP solve is much
         # more of a bottleneck.)
         pₖ = B \ -∇fₖ
+        # println(pₖ)
         # Run line search in direction `pₖ`
         αₖ, fₖ₊₁, ∇fₖ₊₁ = _line_search(f, fₖ, ∇fₖ, xₖ, pₖ, αₖ, evals)
+        # println(fₖ₊₁)
         if _norm(αₖ * pₖ) / max(1.0, _norm(xₖ)) < 1e-3
             # Small steps! Probably at the edge of the feasible region.
             # Return the current iterate.
@@ -127,24 +132,31 @@ function _line_search(
     α::Float64,
     evals::Ref{Int},
 ) where {F<:Function}
+    # println((_norm(α * p), 1e-3 * max(1.0, _norm(x))))
+    # println(_norm(α * p) > 1e-3 * max(1.0, _norm(x)))
     while _norm(α * p) > 1e-3 * max(1.0, _norm(x))
         xₖ = x + α * p
         ret = f(xₖ)
+        # println(("ret", ret))
         evals[] -= 1
         if ret === nothing  # Infeasible. So take a smaller step
             α /= 2
             continue
         end
         fₖ₊₁, ∇fₖ₊₁ = ret
+        # println(("f_next", fₖ₊₁, "grad_next", ∇fₖ₊₁))
         if p' * ∇fₖ₊₁ < 1e-6
             # Still a descent direction, so take a step.
+            # println("descent")
             return α, fₖ₊₁, ∇fₖ₊₁
         elseif isapprox(fₖ + α * p' * ∇fₖ, fₖ₊₁; atol = 1e-8)
             # Step is onto a kink
+            # println("is_approx")
             return α, fₖ₊₁, ∇fₖ₊₁
         end
         #  Step is an ascent, so use Newton's method to find the intersection
         α = (fₖ₊₁ - fₖ - p' * ∇fₖ₊₁ * α) / (p' * ∇fₖ - p' * ∇fₖ₊₁)
+        # println("norm ", _norm(α * p))
     end
     return 0.0, fₖ, ∇fₖ
 end

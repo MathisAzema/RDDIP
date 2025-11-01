@@ -620,11 +620,26 @@ struct BeliefState{T}
     updater::Function
 end
 
+mutable struct Cut2
+    intercept::Float64
+    cost_to_go_value::Float64
+    constraint::JuMP.ConstraintRef
+    outgoing_state_values::Dict{Symbol,Float64}
+end
+
+mutable struct LagrangianProblem
+    model::JuMP.Model
+    theta::JuMP.VariableRef
+    dual_variables::Dict{Symbol,JuMP.VariableRef}
+    constraints::Vector{Cut2}
+end
+
 mutable struct Node{T}
     # The index of the node in the policy graph.
     index::T
     # The JuMP subproblem.
     subproblem::JuMP.Model
+    lagrangian::LagrangianProblem
     # A vector of the child nodes.
     children::Vector{Noise{T}}
     # A vector of the discrete stagewise-independent noise terms.
@@ -758,9 +773,11 @@ function construct_subproblem(optimizer_factory, direct_mode::Bool)
     if direct_mode
         model = JuMP.direct_model(MOI.instantiate(optimizer_factory))
         set_silent(model)
-        return model
+        lagrange_model = JuMP.direct_model(MOI.instantiate(optimizer_factory))
+        set_silent(lagrange_model)
+        return lagrange_model, model
     end
-    return JuMP.Model()
+    return JuMP.Model(), JuMP.Model()
 end
 
 # Work around different JuMP modes (Automatic / Manual / Direct).
@@ -871,6 +888,15 @@ function MarkovianPolicyGraph(
     return PolicyGraph(builder, MarkovianGraph(transition_matrices); kwargs...)
 end
 
+function _initialize_lagrangian_problem(node::Node)
+    lagrangian = node.lagrangian
+    model = lagrangian.model
+    keys_collection = collect(keys(node.states))
+    @variable(model, λ[k in keys_collection])
+    node.lagrangian.dual_variables = Dict{Symbol, JuMP.VariableRef}(k => λ[k] for k in keys_collection)
+    return
+end
+
 """
     PolicyGraph(
         builder::Function,
@@ -925,6 +951,8 @@ end
 """
 function PolicyGraph(
     builder::Function,
+    instance::Instance,
+    force::Float64,
     graph::Graph{T};
     sense::Symbol = :Min,
     lower_bound = -Inf,
@@ -963,10 +991,21 @@ function PolicyGraph(
         if node_index == graph.root_node
             continue
         end
-        subproblem = construct_subproblem(optimizer, direct_mode)
+        lagrangian, subproblem = construct_subproblem(optimizer, direct_mode)
+        theta = @variable(
+            lagrangian,
+            base_name = "theta_$(node_index)",
+        )
+        JuMP.set_objective_function(
+        lagrangian,
+            @expression(lagrangian, theta),
+        )
+        # set_optimizer_attribute(lagrangian, "DualReductions", 0)
+        lagrangian_problem = LagrangianProblem(lagrangian, theta, Dict{Symbol,JuMP.VariableRef}(), Cut2[])
         node = Node(
             node_index,
             subproblem,
+            lagrangian_problem,
             Noise{T}[],
             Noise[],
             (ω) -> nothing,
@@ -994,7 +1033,13 @@ function PolicyGraph(
         subproblem.ext[:RDDIP_policy_graph] = policy_graph
         policy_graph.nodes[node_index] = subproblem.ext[:RDDIP_node] = node
         JuMP.set_objective_sense(subproblem, policy_graph.objective_sense)
-        builder(subproblem, node_index)
+        builder(instance, force, subproblem, node_index)
+        _initialize_lagrangian_problem(node)
+        if policy_graph.objective_sense == MOI.MIN_SENSE
+            JuMP.set_objective_sense(lagrangian_problem.model, MOI.MAX_SENSE)
+        else
+            JuMP.set_objective_sense(lagrangian_problem.model, MOI.MIN_SENSE)
+        end
         # Add a dummy noise here so that all nodes have at least one noise term.
         if length(node.noise_terms) == 0
             push!(node.noise_terms, Noise(nothing, 1.0))
@@ -1039,6 +1084,26 @@ function PolicyGraph(
     for (node_name, node) in policy_graph.nodes
         for (k, v) in domain[node_name]
             node.incoming_state_bounds[k] = something(v, (-Inf, Inf, false))
+        end
+    end
+
+    for (node_name, node) in policy_graph.nodes
+        for (i, (key, state)) in enumerate(node.states)
+            l, u, is_integer = node.incoming_state_bounds[key]
+            if l > -Inf
+                @constraint(node.subproblem, state.in >= l)
+                JuMP.set_lower_bound(state.in, l)
+            end
+            if u < Inf
+                @constraint(node.subproblem, state.in <= u)
+                JuMP.set_upper_bound(state.in, u)
+            end
+            # if is_integer
+            #     JuMP.set_integer(state.in)
+            # end
+            # if is_binary(state.out)
+            #     JuMP.set_binary(state.in)
+            # end
         end
     end
     return policy_graph

@@ -9,54 +9,59 @@ function parse_nc4(name_instance, optimizer, T=24)
     TimeHorizon= T
     demand=data_block["ActivePowerDemand"].var[:]
     N=size(keys(data_block.group))[1]-1
+    # N=2
     Thermal_units=Vector{ThermalUnit}(undef, N)
     Hydro_units=Dict()
+    k=0
     for unit in data_block.group
-        if occursin("Block", first(unit))
-            unit_name=parse(Int64, split(first(unit), "_")[end])+1
-            type=last(unit).attrib["type"]
-            if type == "ThermalUnitBlock" 
-                Bus = 1
-                MinPower=last(unit)["MinPower"].var[1]
-                MaxPower =last(unit)["MaxPower"].var[1] 
-                DeltaRampUp  =last(unit)["DeltaRampUp"].var[1]
-                DeltaRampDown  =last(unit)["DeltaRampDown"].var[1]
-                QuadTerm =last(unit)["QuadTerm"].var[1] 
-                StartUpCost=last(unit)["StartUpCost"].var[1]
-                StartDownCost=0.0 
-                LinearTerm=last(unit)["LinearTerm"].var[1]
-                ConstTerm=last(unit)["ConstTerm"].var[1]
-                InitialPower=last(unit)["InitialPower"].var[1]  
-                InitUpDownTime =last(unit)["InitUpDownTime"].var[1] 
-                MinUpTime=last(unit)["MinUpTime"].var[1]  
-                MinDownTime=last(unit)["MinDownTime"].var[1]
-                intervals=set_intervals(Int64(MinUpTime), InitUpDownTime, InitialPower, MaxPower, MinPower, DeltaRampDown)
-                Tup=Int64(1+floor((MaxPower-MinPower)/DeltaRampUp))
-                Tdown=Int64(1+floor((MaxPower-MinPower)/DeltaRampDown))
+        if k < N
+            if occursin("Block", first(unit))
+                k += 1
+                unit_name=parse(Int64, split(first(unit), "_")[end])+1
+                type=last(unit).attrib["type"]
+                if type == "ThermalUnitBlock" 
+                    Bus = 1
+                    MinPower=last(unit)["MinPower"].var[1]
+                    MaxPower =last(unit)["MaxPower"].var[1] 
+                    DeltaRampUp  =last(unit)["DeltaRampUp"].var[1]
+                    DeltaRampDown  =last(unit)["DeltaRampDown"].var[1]
+                    QuadTerm =last(unit)["QuadTerm"].var[1] 
+                    StartUpCost=last(unit)["StartUpCost"].var[1]
+                    StartDownCost=0.0 
+                    LinearTerm=last(unit)["LinearTerm"].var[1]
+                    ConstTerm=last(unit)["ConstTerm"].var[1]
+                    InitialPower=last(unit)["InitialPower"].var[1]  
+                    InitUpDownTime =last(unit)["InitUpDownTime"].var[1] 
+                    MinUpTime=last(unit)["MinUpTime"].var[1]  
+                    MinDownTime=last(unit)["MinDownTime"].var[1]
+                    intervals=set_intervals(Int64(MinUpTime), InitUpDownTime, InitialPower, MaxPower, MinPower, DeltaRampDown)
+                    Tup=Int64(1+floor((MaxPower-MinPower)/DeltaRampUp))
+                    Tdown=Int64(1+floor((MaxPower-MinPower)/DeltaRampDown))
 
-                unit=ThermalUnit(unit_name, Bus, MinPower, MaxPower, DeltaRampUp, DeltaRampDown, QuadTerm, StartUpCost, StartDownCost, LinearTerm, ConstTerm, InitialPower, InitUpDownTime, Int64(MinUpTime), Int64(MinDownTime), intervals, Tup, Tdown)
-                Thermal_units[unit_name]=unit
-            end
-            if type == "HydroUnitBlock"
-                StartArc=last(unit)["StartArc"].var[:]
-                EndArc =last(unit)["EndArc"].var[:]
-                Inflows  =last(unit)["Inflows"].var[:, :]
-                InitialVolumetric  =last(unit)["InitialVolumetric"].var[:]
-                MinVolumetric =last(unit)["MinVolumetric"].var[:,:] 
-                MaxVolumetric=last(unit)["MaxVolumetric"].var[:,:]  
-                UphillFlow=last(unit)["UphillFlow"].var[:]  
-                DownhillFlow=last(unit)["DownhillFlow"].var[:]  
-                InitialFlowRate=last(unit)["InitialFlowRate"].var[:]  
-                DeltaRampUp =last(unit)["DeltaRampUp"].var[:,:] 
-                DeltaRampDown=last(unit)["DeltaRampDown"].var[:,:]  
-                MinFlow=last(unit)["MinFlow"].var[:,:]
-                MaxFlow=last(unit)["MaxFlow"].var[:,:]
-                MinPower=last(unit)["MinPower"].var[:,:]
-                MaxPower=last(unit)["MaxPower"].var[:,:]
-                NumberPieces=last(unit)["NumberPieces"].var[:] 
-                LinearTerm=last(unit)["LinearTerm"].var[:]  
-                ConstTerm=last(unit)["ConstantTerm"].var[:]
-                Hydro_units[unit_name]=HydroUnit(unit_name, StartArc, EndArc, Inflows, InitialVolumetric, MinVolumetric, MaxVolumetric, UphillFlow, DownhillFlow, InitialFlowRate, DeltaRampUp, DeltaRampDown, MinFlow, MaxFlow, MinPower, MaxPower, NumberPieces, LinearTerm, ConstTerm)
+                    unit=ThermalUnit(unit_name, Bus, MinPower, MaxPower, DeltaRampUp, DeltaRampDown, QuadTerm, StartUpCost, StartDownCost, LinearTerm, ConstTerm, InitialPower, InitUpDownTime, Int64(MinUpTime), Int64(MinDownTime), intervals, Tup, Tdown)
+                    Thermal_units[unit_name]=unit
+                end
+                if type == "HydroUnitBlock"
+                    StartArc=last(unit)["StartArc"].var[:]
+                    EndArc =last(unit)["EndArc"].var[:]
+                    Inflows  =last(unit)["Inflows"].var[:, :]
+                    InitialVolumetric  =last(unit)["InitialVolumetric"].var[:]
+                    MinVolumetric =last(unit)["MinVolumetric"].var[:,:] 
+                    MaxVolumetric=last(unit)["MaxVolumetric"].var[:,:]  
+                    UphillFlow=last(unit)["UphillFlow"].var[:]  
+                    DownhillFlow=last(unit)["DownhillFlow"].var[:]  
+                    InitialFlowRate=last(unit)["InitialFlowRate"].var[:]  
+                    DeltaRampUp =last(unit)["DeltaRampUp"].var[:,:] 
+                    DeltaRampDown=last(unit)["DeltaRampDown"].var[:,:]  
+                    MinFlow=last(unit)["MinFlow"].var[:,:]
+                    MaxFlow=last(unit)["MaxFlow"].var[:,:]
+                    MinPower=last(unit)["MinPower"].var[:,:]
+                    MaxPower=last(unit)["MaxPower"].var[:,:]
+                    NumberPieces=last(unit)["NumberPieces"].var[:] 
+                    LinearTerm=last(unit)["LinearTerm"].var[:]  
+                    ConstTerm=last(unit)["ConstantTerm"].var[:]
+                    Hydro_units[unit_name]=HydroUnit(unit_name, StartArc, EndArc, Inflows, InitialVolumetric, MinVolumetric, MaxVolumetric, UphillFlow, DownhillFlow, InitialFlowRate, DeltaRampUp, DeltaRampDown, MinFlow, MaxFlow, MinPower, MaxPower, NumberPieces, LinearTerm, ConstTerm)
+                end
             end
         end
     end

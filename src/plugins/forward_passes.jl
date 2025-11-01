@@ -31,6 +31,7 @@ function forward_pass(
         scenario_path, terminated_due_to_cycle =
             sample_scenario(model, options.sampling_scheme)
     end
+    # println(scenario_path)
     final_node = scenario_path[end]
     if terminated_due_to_cycle && !pass.include_last_node
         pop!(scenario_path)
@@ -50,6 +51,7 @@ function forward_pass(
     objective_states = NTuple{N,Float64}[]
     # Iterate down the scenario.
     for (depth, (node_index, noise)) in enumerate(scenario_path)
+        # println(node_index)
         node = model[node_index]
         lock(node.lock)
         try
@@ -108,16 +110,26 @@ function forward_pass(
             end
             # Cumulate the stage_objective.
             cumulative_value += subproblem_results.stage_objective
+            # println("Stage ", depth, " objective: ", subproblem_results.stage_objective, " objective cost to go: ", objective_value(node.subproblem))
+            # println(([round.([value(node.states[Symbol("power[$i]")].in), value(node.states[Symbol("power[$i]")].out)]) for i in 1:10]))
+            # println([(value(node.states[Symbol("is_on[$i]")].in), value(node.states[Symbol("is_on[$i]")].out)) for i in 1:10])
             # Set the outgoing state value as the incoming state value for the next
             # node.
             incoming_state_value = copy(subproblem_results.state)
             # Add the outgoing state variable to the list of states we have sampled
             # on this forward pass.
             push!(sampled_states, incoming_state_value)
+            if node_index == 1
+                println("Lower bound: ", objective_value(node.subproblem))
+            end
+            # println(node.index, " ", objective_value(node.subproblem))
         finally
             unlock(node.lock)
         end
     end
+    # println(length(scenario_path))
+    # println(sampled_states)
+    # println(sampled_states[1])
     if terminated_due_to_cycle
         # We terminated due to a cycle. Here is the list of possible
         # starting states for that node:

@@ -171,7 +171,7 @@ end
 # contained in state.
 function set_incoming_state(node::Node, state::Dict{Symbol,Float64})
     for (state_name, value) in state
-        JuMP.fix(node.states[state_name].in, value)
+        JuMP.fix(node.states[state_name].in, value; force=true)
     end
     return
 end
@@ -438,6 +438,8 @@ function _initialize_solver(node::Node; throw_error::Bool)
         end
         set_optimizer(node.subproblem, node.optimizer)
         set_silent(node.subproblem)
+        set_optimizer(node.lagrangian.model, node.optimizer)
+        set_silent(node.lagrangian.model)
     end
     return
 end
@@ -529,11 +531,22 @@ function solve_subproblem(
     if !_has_primal_solution(node)
         attempt_numerical_recovery(model, node)
     end
-    state = get_outgoing_state(node)
+    outgoing_state = get_outgoing_state(node)
     stage_objective = stage_objective_value(node, node.stage_objective)
+    cost_to_go_value = value(node.bellman_function.global_theta.theta)
+    intercept = JuMP.objective_value(node.subproblem)
+    _refine_lagrangian_model(
+        node,
+        intercept,
+        cost_to_go_value,
+        state,
+        outgoing_state,
+    )
     @_timeit_threadsafe model.timer_output "get_dual_solution" begin
         objective, dual_values = get_dual_solution(node, duality_handler)
     end
+    state = outgoing_state
+
     if node.post_optimize_hook !== nothing
         node.post_optimize_hook(pre_optimize_ret)
     end
@@ -616,6 +629,7 @@ function backward_pass(
     # TODO(odow): improve storage type.
     cuts = Dict{T,Vector{Any}}(index => Any[] for index in keys(model.nodes))
     for index in length(scenario_path):-1:1
+        # println("Backward pass at index $index")
         outgoing_state = sampled_states[index]
         objective_state = get(objective_states, index, nothing)
         partition_index, belief_state = get(belief_states, index, (0, nothing))
@@ -975,6 +989,7 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
             forward_trajectory.belief_states,
         )
     end
+    # println("backward pass complete.")
     @_timeit_threadsafe model.timer_output "calculate_bound" begin
         bound = calculate_bound(
             model;
@@ -1311,6 +1326,7 @@ function train(
     end
     training_results = TrainingResults(status, log)
     model.most_recent_training_results = training_results
+    return training_results
     if print_level > 0
         log_iteration(options; force_if_needed = true)
         print_helper(print_footer, log_file_handle, training_results)

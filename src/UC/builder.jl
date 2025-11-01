@@ -1,0 +1,223 @@
+# function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subproblem::Model, node::Int)
+#     # State variables
+#     N=instance.N
+#     T= instance.TimeHorizon
+#     thermal_units=values(instance.Thermalunits)
+#     Next=instance.Next
+#     Buses=1:size(Next)[1]
+#     Lines=values(instance.Lines)
+#     BusWind=instance.BusWind
+#     NumWindfarms=length(BusWind)
+
+#     @variable(subproblem, 0.0 <= power[i = 1:N] <= thermal_units[i].MaxPower, RDDIP.State, initial_value = thermal_units[i].InitialPower)
+    
+#     @variable(subproblem, is_on[i = 1:N], Bin, RDDIP.State, initial_value = thermal_units[i].InitUpDownTime>0) #initial value fictive
+#     @variable(subproblem, start_up[i = 1:N], Bin)
+#     @variable(subproblem, start_down[i = 1:N], Bin)
+
+#     # @constraint(subproblem, [i in 1:N], is_on[i].out == 1)
+
+#     initup=[[0 for k in 0:thermal_units[i].MinUpTime-1] for i in 1:N]
+#     initdown=[[0 for k in 0:thermal_units[i].MinDownTime-1] for i in 1:N]
+#     for i in 1:N
+#         if thermal_units[i].InitUpDownTime!=nothing
+#             if thermal_units[i].InitUpDownTime>0
+#                 for k in 0:thermal_units[i].MinUpTime-1
+#                     if k<thermal_units[i].InitUpDownTime
+#                         initup[i][k+1]=1
+#                     end
+#                 end
+#             elseif thermal_units[i].InitUpDownTime<0
+#                 for k in 0:thermal_units[i].MinDownTime-1
+#                     if k<-thermal_units[i].InitUpDownTime
+#                         initdown[i][k+1]=1
+#                     end
+#                 end
+#             end
+#         end
+#     end
+#     # @variable(subproblem, u[i = 1:N, k in 0:thermal_units[i].MinUpTime-1], Bin, RDDIP.State, initial_value = initup[i][k+1])
+#     # @constraint(subproblem, [i = 1:N], u[i,0].out == start_up[i])
+#     # @constraint(subproblem, [i = 1:N, k in 1:thermal_units[i].MinUpTime-1], u[i,k].out == u[i,k-1].in)
+
+#     # @variable(subproblem, v[i = 1:N, k in 0:thermal_units[i].MinDownTime-1], Bin, RDDIP.State, initial_value = initdown[i][k+1])
+#     # @constraint(subproblem, [i = 1:N], v[i,0].out == start_down[i])
+#     # @constraint(subproblem, [i = 1:N, k in 1:thermal_units[i].MinDownTime-1], v[i,k].out == v[i,k-1].in)
+
+#     # @constraint(subproblem, [i = 1:N], sum(u[i,k].out for k in 0:thermal_units[i].MinUpTime-1) <= is_on[i].out)
+#     # @constraint(subproblem, [i = 1:N], sum(v[i,k].out for k in 0:thermal_units[i].MinDownTime-1) <= 1 - is_on[i].out)
+
+#     @constraint(subproblem, [i = 1:N], is_on[i].out == is_on[i].in + start_up[i] - start_down[i])
+#     @constraint(subproblem, [i = 1:N], start_up[i] <= is_on[i].out)
+#     @constraint(subproblem, [i = 1:N], start_down[i] <= 1 - is_on[i].out)
+
+#     cstr = JuMP.ConstraintRef[]
+    
+
+#         # Control variables
+#     @variables(subproblem, begin
+#         power_shedding[b in Buses] >= 0
+#         power_curtailement[b in Buses] >= 0
+#         θ[b in Buses] 
+#         flow[b in Buses, bp in Next[b]]
+#     end)
+
+#     t=node
+
+#     # Random variables
+#     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
+#     Ω = [[0.0 for b in BusWind]]
+#     P = [1.0]
+#     RDDIP.parameterize(subproblem, Ω, P) do ω
+#         for k in 1:NumWindfarms
+#             JuMP.fix(error_forecast[k], ω[k])
+#         end
+#     end
+
+
+#         # Transition function and constraints
+#     @constraints(
+#         subproblem,
+#         begin
+#             [i = 1: N], power[i].out <= thermal_units[i].MaxPower * is_on[i].out
+#             [i = 1: N], power[i].out >= thermal_units[i].MinPower * is_on[i].out
+#             [i = 1:N], power[i].out - power[i].in <= (-thermal_units[i].DeltaRampUp)*start_up[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampUp)*is_on[i].out - (thermal_units[i].MinPower)*is_on[i].in
+#             [i = 1: N], power[i].in - power[i].out <= (-thermal_units[i].DeltaRampDown)*start_down[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampDown)*is_on[i].in - (thermal_units[i].MinPower)*is_on[i].out
+#             [line in Lines], flow[line.b1,line.b2] <= line.Fmax
+#             [line in Lines], flow[line.b1,line.b2] >= -line.Fmax
+#             [line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
+#         end
+#     )
+#     cstr = [@constraint(subproblem,sum(power[unit.name].out for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
+#         # Stage-objective
+#     @stageobjective(subproblem, sum(unit.LinearTerm*power[unit.name].out for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
+
+# end
+
+function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subproblem::Model, node::Int)
+    # State variables
+    K = 4
+    N=instance.N
+    T= instance.TimeHorizon
+    thermal_units=values(instance.Thermalunits)
+    Next=instance.Next
+    Buses=1:size(Next)[1]
+    Lines=values(instance.Lines)
+    BusWind=instance.BusWind
+    NumWindfarms=length(BusWind)
+
+    # @variable(subproblem, 0.0 <= power[i = 1:N] <= thermal_units[i].MaxPower, RDDIP.State, initial_value = thermal_units[i].InitialPower)
+    
+    @variable(subproblem, is_on[i = 1:N], Bin, RDDIP.State, initial_value = thermal_units[i].InitUpDownTime>0) #initial value fictive
+    @variable(subproblem, start_up[i = 1:N], Bin)
+    @variable(subproblem, start_down[i = 1:N], Bin)
+
+    idx_list = [0 for unit in thermal_units]
+
+    for unit in thermal_units
+        initpower = unit.InitialPower
+        power_levels = [0.0; [unit.MinPower + (k-1)*(unit.MaxPower - unit.MinPower)/(K-1) for k in 1:K]]
+        idx = argmin(abs.(power_levels .- initpower))
+        idx_list[unit.name] = idx-1
+    end
+
+    init_integer = [[idx_list[i]==k for i in 1:N] for k in 1:K]
+
+
+    @variable(subproblem, power_integer[i = 1:N, k in 1:K], Bin, RDDIP.State, initial_value = init_integer[k][i])
+    @variable(subproblem, power_dev[i = 1:N])
+    @variable(subproblem, power[i = 1:N]>=0)
+    @variable(subproblem, power_real[i = 1:N]>=0)
+    @variable(subproblem, power_prev[i = 1:N]>=0)
+    @constraint(subproblem,  [i = 1:N], power_dev[i] <= 0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  [i = 1:N], power_dev[i] >= -0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) + power_dev[i] == power_real[i])
+    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power[i])
+    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].in*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power_prev[i])
+    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out for k in 1:K) == is_on[i].out)
+    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].in for k in 1:K) == is_on[i].in)
+
+    # @constraint(subproblem, [i in 1:N], is_on[i].out == 1)
+
+    initup=[[0 for k in 0:thermal_units[i].MinUpTime-1] for i in 1:N]
+    initdown=[[0 for k in 0:thermal_units[i].MinDownTime-1] for i in 1:N]
+    for i in 1:N
+        if thermal_units[i].InitUpDownTime!=nothing
+            if thermal_units[i].InitUpDownTime>0
+                for k in 0:thermal_units[i].MinUpTime-1
+                    if k<thermal_units[i].InitUpDownTime
+                        initup[i][k+1]=1
+                    end
+                end
+            elseif thermal_units[i].InitUpDownTime<0
+                for k in 0:thermal_units[i].MinDownTime-1
+                    if k<-thermal_units[i].InitUpDownTime
+                        initdown[i][k+1]=1
+                    end
+                end
+            end
+        end
+    end
+    # @variable(subproblem, u[i = 1:N, k in 0:thermal_units[i].MinUpTime-1], Bin, RDDIP.State, initial_value = initup[i][k+1])
+    # @constraint(subproblem, [i = 1:N], u[i,0].out == start_up[i])
+    # @constraint(subproblem, [i = 1:N, k in 1:thermal_units[i].MinUpTime-1], u[i,k].out == u[i,k-1].in)
+
+    # @variable(subproblem, v[i = 1:N, k in 0:thermal_units[i].MinDownTime-1], Bin, RDDIP.State, initial_value = initdown[i][k+1])
+    # @constraint(subproblem, [i = 1:N], v[i,0].out == start_down[i])
+    # @constraint(subproblem, [i = 1:N, k in 1:thermal_units[i].MinDownTime-1], v[i,k].out == v[i,k-1].in)
+
+    # @constraint(subproblem, [i = 1:N], sum(u[i,k].out for k in 0:thermal_units[i].MinUpTime-1) <= is_on[i].out)
+    # @constraint(subproblem, [i = 1:N], sum(v[i,k].out for k in 0:thermal_units[i].MinDownTime-1) <= 1 - is_on[i].out)
+
+    @constraint(subproblem, [i = 1:N], is_on[i].out == is_on[i].in + start_up[i] - start_down[i])
+    @constraint(subproblem, [i = 1:N], start_up[i] <= is_on[i].out)
+    @constraint(subproblem, [i = 1:N], start_down[i] <= 1 - is_on[i].out)
+
+    cstr = JuMP.ConstraintRef[]
+    
+
+        # Control variables
+    @variables(subproblem, begin
+        power_shedding[b in Buses] >= 0
+        power_curtailement[b in Buses] >= 0
+        θ[b in Buses] 
+        flow[b in Buses, bp in Next[b]]
+    end)
+
+    t=node
+
+    # Random variables
+    @variable(subproblem, error_forecast[k in 1:NumWindfarms])
+    Ω = [[0.0 for b in BusWind], [1.0 for b in BusWind]]
+    P = [0.5, 0.5]
+    if t == 1
+        Ω = [[0.0 for b in BusWind]]
+        P = [1.0]
+    end
+    RDDIP.parameterize(subproblem, Ω, P) do ω
+        for k in 1:NumWindfarms
+            JuMP.fix(error_forecast[k], ω[k])
+        end
+    end
+
+
+        # Transition function and constraints
+    @constraints(
+        subproblem,
+        begin
+            [i = 1: N], power[i] <= thermal_units[i].MaxPower * is_on[i].out
+            [i = 1: N], power[i] >= thermal_units[i].MinPower * is_on[i].out
+            [i = 1: N], power_real[i] <= thermal_units[i].MaxPower * is_on[i].out
+            [i = 1: N], power_real[i] >= thermal_units[i].MinPower * is_on[i].out
+            [i = 1:N], power_real[i] - power_prev[i] <= (-thermal_units[i].DeltaRampUp)*start_up[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampUp)*is_on[i].out - (thermal_units[i].MinPower)*is_on[i].in
+            [i = 1: N], power_prev[i] - power_real[i] <= (-thermal_units[i].DeltaRampDown)*start_down[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampDown)*is_on[i].in - (thermal_units[i].MinPower)*is_on[i].out
+            [line in Lines], flow[line.b1,line.b2] <= line.Fmax
+            [line in Lines], flow[line.b1,line.b2] >= -line.Fmax
+            [line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
+        end
+    )
+    cstr = [@constraint(subproblem,sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
+        # Stage-objective
+    @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
+
+end

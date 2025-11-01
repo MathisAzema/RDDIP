@@ -29,6 +29,23 @@ using DataFrames
 using RecipesBase
 
 export @stageobjective
+#UC 
+const SHEDDING_COST=300.0
+const CURTAILEMENT_COST=300.0
+
+include("UC/Struct/Instance.jl")
+include("UC/Struct/tools.jl")
+include("UC/Unit/Thermal_unit.jl")
+include("UC/Unit/Line.jl")
+include("UC/Struct/parsing.jl")
+include("UC/Optimizer/extensive_formulation.jl")
+include("UC/Optimizer/initialisation_Benders.jl")
+include("UC/Optimizer/second_stage_SP.jl")
+include("UC/Optimizer/add_cut_SP.jl")
+include("UC/Optimizer/add_cut_AVAR.jl")
+include("UC/Optimizer/benders.jl")
+include("UC/Optimizer/benders_AVAR.jl")
+include("UC/Optimizer/options.jl")
 
 # Modelling interface.
 include("user_interface.jl")
@@ -47,6 +64,8 @@ include("print.jl")
 
 # The core RDDIP code.
 include("algorithm.jl")
+
+include("UC/builder.jl")
 
 # Specific plugins.
 include("plugins/risk_measures.jl")
@@ -75,22 +94,4 @@ include("Inner.jl")
 
 include("Experimental.jl")
 include("MSPFormat.jl")
-
-#UC 
-const SHEDDING_COST=700.0
-const CURTAILEMENT_COST=700.0
-
-include("UC/Struct/Instance.jl")
-include("UC/Struct/tools.jl")
-include("UC/Unit/Thermal_unit.jl")
-include("UC/Unit/Line.jl")
-include("UC/Struct/parsing.jl")
-include("UC/Optimizer/extensive_formulation.jl")
-include("UC/Optimizer/initialisation_Benders.jl")
-include("UC/Optimizer/second_stage_SP.jl")
-include("UC/Optimizer/add_cut_SP.jl")
-include("UC/Optimizer/add_cut_AVAR.jl")
-include("UC/Optimizer/benders.jl")
-include("UC/Optimizer/benders_AVAR.jl")
-include("UC/Optimizer/options.jl")
 end

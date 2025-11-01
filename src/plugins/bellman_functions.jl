@@ -1,4 +1,4 @@
-#  Copyright (c) 2017-25, Oscar Dowson and RDDIP.jl contributors.
+#  Copyright (c) 2017-25, Oscar Dowson and MSUC.jl contributors.
 #  This Source Code Form is subject to the terms of the Mozilla Public License,
 #  v. 2.0. If a copy of the MPL was not distributed with this file, You can
 #  obtain one at http://mozilla.org/MPL/2.0/.
@@ -100,6 +100,32 @@ function _add_cut(
     _add_cut_constraint_to_model(V, cut)
     if cut_selection
         _cut_selection_update(V, cut, xᵏ)
+    end
+    return
+end
+
+function _update_lagrangian_model(
+    node::Node{T},
+    θᵏ::Float64,
+    πᵏ::Dict{Symbol,Float64},
+    xᵏ::Dict{Symbol,Float64},
+    obj_y::Union{Nothing,NTuple{N,Float64}},
+    belief_y::Union{Nothing,Dict{T,Float64}}
+) where {N,T}
+    for (key, x) in xᵏ
+        θᵏ -= πᵏ[key] * x
+    end
+    _dynamic_range_warning(θᵏ, πᵏ)
+    cut = Cut(θᵏ, πᵏ, obj_y, belief_y, 1, nothing)
+    for cstr in node.lagrangian.constraints
+        value_new_cut = cut.intercept + sum(cut.coefficients[i] * x for (i, x) in cstr.outgoing_state_values)
+        if value_new_cut > cstr.cost_to_go_value
+            new_cost_to_go = value_new_cut
+            new_intercept = cstr.intercept + max(value_new_cut - cstr.cost_to_go_value)
+            set_normalized_rhs(cstr.constraint, new_intercept)
+            cstr.cost_to_go_value = new_cost_to_go
+            cstr.intercept = new_intercept
+        end
     end
     return
 end
@@ -229,7 +255,7 @@ end
 """
     BellmanFunction
 
-A representation of the value function. RDDIP.jl uses the following unique
+A representation of the value function. MSUC.jl uses the following unique
 representation of the value function that is undocumented in the literature.
 
 It supports three types of state variables:
@@ -499,6 +525,7 @@ function _add_average_cut(
             πᵏ[key] += p * dual
         end
     end
+    # println(θᵏ)
     # Now add the average-cut to the subproblem. We include the objective-state
     # component μᵀy and the belief state (if it exists).
     obj_y =
@@ -507,6 +534,14 @@ function _add_average_cut(
         node.belief_state === nothing ? nothing : node.belief_state.belief
     _add_cut(
         node.bellman_function.global_theta,
+        θᵏ,
+        πᵏ,
+        outgoing_state,
+        obj_y,
+        belief_y,
+    )
+    _update_lagrangian_model(
+        node,
         θᵏ,
         πᵏ,
         outgoing_state,
@@ -632,7 +667,7 @@ Write the cuts that form the policy in `model` to `filename` in JSON format.
  - `write_only_selected_cuts` write only the selected cuts to the json file.
     Defaults to false.
 
-See also [`RDDIP.read_cuts_from_file`](@ref).
+See also [`MSUC.read_cuts_from_file`](@ref).
 """
 function write_cuts_to_file(
     model::PolicyGraph{T},
@@ -729,7 +764,7 @@ end
         kwargs...,
     ) where {T}
 
-Read cuts (saved using [`RDDIP.write_cuts_to_file`](@ref)) from `filename` into
+Read cuts (saved using [`MSUC.write_cuts_to_file`](@ref)) from `filename` into
 `model`.
 
 Since `T` can be an arbitrary Julia type, the conversion to JSON is lossy. When
@@ -746,7 +781,7 @@ type `T`, provide a function `node_name_parser` with the signature
  - `cut_selection::Bool` run or not the cut selection algorithm when adding the
     cuts to the model.
 
-See also [`RDDIP.write_cuts_to_file`](@ref).
+See also [`MSUC.write_cuts_to_file`](@ref).
 """
 function read_cuts_from_file(
     model::PolicyGraph{T},
@@ -835,7 +870,7 @@ Add all cuts that may have been deleted back into the model.
 
 ## Explanation
 
-During the solve, RDDIP.jl may decide to remove cuts for a variety of reasons.
+During the solve, MSUC.jl may decide to remove cuts for a variety of reasons.
 
 These can include cuts that define the optimal value function, particularly
 around the extremes of the state-space (e.g., reservoirs empty).
