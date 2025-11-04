@@ -186,17 +186,39 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
 
     t=node
 
-    # Random variables
-    @variable(subproblem, error_forecast[k in 1:NumWindfarms], RDDIP.Uncertain)
-    Ω = [[0.0 for b in BusWind], [1.0 for b in BusWind]]
-    P = [0.5, 0.5]
+        # Random variables
+    @variable(subproblem, error_forecast[k in 1:NumWindfarms])
+    M = 5
+    Ω = [[(-1.0+(s-1)*0.5) for b in BusWind] for s in 1:M]
+    P = [1/M for s in 1:M]
+    # Ω = [[0.0 for b in BusWind]]
+    # P = [1.0]
     if t == 1
         Ω = [[0.0 for b in BusWind]]
         P = [1.0]
     end
-    RDDIP.parameterize(subproblem, Ω, P) do ω
-        for k in 1:NumWindfarms
-            JuMP.fix(error_forecast[k].var, ω[k])
+    @variable(subproblem, uncertainty[s in 1:length(P)], Bin, RDDIP.Uncertain)
+    @constraint(subproblem, sum(uncertainty[s].var for s in 1:length(P)) == 1)
+    @constraint(subproblem, [k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
+    Ωs = [[1*(k==s) for k in 1:length(P)] for s in 1:length(P)]
+    RDDIP.parameterize(subproblem, Ωs, P) do ω
+        for k in 1:length(P)
+            # Prefer dictionary access using the uncertainty variable symbol
+            key = Symbol("uncertainty[$k]")
+            val = nothing
+            if isa(ω, AbstractDict)
+                val = get(ω, key, nothing)
+            end
+            if val === nothing
+                # Fallback to vector-like indexing for backward compatibility
+                if isa(ω, AbstractVector) && length(ω) >= k
+                    val = ω[k]
+                else
+                    error("No realization available for uncertainty $(key)")
+                end
+            end
+            # val = ω == sp
+            JuMP.fix(uncertainty[k].var, val)
         end
     end
 
@@ -216,7 +238,7 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
             [line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
         end
     )
-    cstr = [@constraint(subproblem,sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w].var for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
+    cstr = [@constraint(subproblem,sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
         # Stage-objective
     @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
 

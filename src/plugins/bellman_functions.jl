@@ -92,12 +92,14 @@ function _add_cut(
     belief_y::Union{Nothing,Dict{T,Float64}};
     cut_selection::Bool = true,
 ) where {N,T}
+    # println(θᵏ)
     for (key, x) in xᵏ
         θᵏ -= πᵏ[key] * x
     end
     _dynamic_range_warning(θᵏ, πᵏ)
     cut = Cut(θᵏ, πᵏ, obj_y, belief_y, 1, nothing)
     _add_cut_constraint_to_model(V, cut)
+    # println(cut.intercept + sum(cut.coefficients[i] * x for (i, x) in xᵏ))
     if cut_selection
         _cut_selection_update(V, cut, xᵏ)
     end
@@ -117,7 +119,7 @@ function _update_lagrangian_model(
     end
     _dynamic_range_warning(θᵏ, πᵏ)
     cut = Cut(θᵏ, πᵏ, obj_y, belief_y, 1, nothing)
-    for cstr in node.lagrangian.constraints
+    for cstr in node.lagrangian.cuts
         value_new_cut = cut.intercept + sum(cut.coefficients[i] * x for (i, x) in cstr.outgoing_state_values)
         if value_new_cut > cstr.cost_to_go_value
             new_cost_to_go = value_new_cut
@@ -518,6 +520,8 @@ function _add_average_cut(
     # risk-adjusted probability distribution.
     πᵏ = Dict(key => 0.0 for key in keys(outgoing_state))
     θᵏ = offset
+    # println(objective_realizations)
+    # println(risk_adjusted_probability)
     for i in 1:length(objective_realizations)
         p = risk_adjusted_probability[i]
         θᵏ += p * objective_realizations[i]

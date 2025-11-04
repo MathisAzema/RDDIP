@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "e6df4b95d697cafbc09bb67e110a997059622190"
+project_hash = "086b08850fdf6ec9efdf5c3c0e36de8fd7d2baa0"
 
 [[deps.ArgCheck]]
 git-tree-sha1 = "f9e9a66c9b7be1ad7372bbd9b062d9230c30c5ce"
@@ -186,6 +186,16 @@ version = "0.9.5"
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
+
+[[deps.Dualization]]
+deps = ["LinearAlgebra", "MathOptInterface"]
+git-tree-sha1 = "9fad46344c58e07f8f2d3170937b3978f8250860"
+uuid = "191a621a-6537-11e9-281d-650236a99e60"
+version = "0.7.1"
+weakdeps = ["JuMP"]
+
+    [deps.Dualization.extensions]
+    DualizationJuMPExt = "JuMP"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
@@ -744,6 +754,12 @@ version = "1.11.0"
 deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
 uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
 version = "7.7.0+0"
+
+[[deps.Suppressor]]
+deps = ["Logging"]
+git-tree-sha1 = "6dbb5b635c5437c68c28c2ac9e39b87138f37c0a"
+uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
+version = "0.2.8"
 
 [[deps.TOML]]
 deps = ["Dates"]

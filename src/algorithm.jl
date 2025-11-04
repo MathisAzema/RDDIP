@@ -200,7 +200,11 @@ function get_outgoing_state(node::Node)
                 outgoing_value = current_bound
             end
         end
-        values[name] = outgoing_value
+        if JuMP.is_binary(state.out)
+            values[name] = round(outgoing_value) # avoid instabilities
+        else
+            values[name] = outgoing_value
+        end
     end
     return values
 end
@@ -498,6 +502,10 @@ function solve_subproblem(
     scenario_path::Vector{Tuple{T,S}};
     duality_handler::Union{Nothing,AbstractDualityHandler},
 ) where {T,S}
+    # if node.index == 24
+    #     println(duality_handler ===  nothing)
+    # end
+    # println(node.index)
     _initialize_solver(node; throw_error = false)
     # Parameterize the model. First, fix the value of the incoming state
     # variables. Then parameterize the model depending on `noise`. Finally,
@@ -516,46 +524,64 @@ function solve_subproblem(
     else
         nothing
     end
-    JuMP.optimize!(node.subproblem)
-    lock(model.lock) do
-        model.ext[:total_solves] = get(model.ext, :total_solves, 0) + 1
-        return
-    end
-    if JuMP.primal_status(node.subproblem) == JuMP.MOI.INTERRUPTED
-        # If the solver was interrupted, the user probably hit CTRL+C but the
-        # solver gracefully exited. Since we're in the middle of training or
-        # simulation, we need to throw an interrupt exception to keep the
-        # interrupt percolating up to the user.
-        throw(InterruptException())
-    end
-    if !_has_primal_solution(node)
-        attempt_numerical_recovery(model, node)
-    end
-    outgoing_state = get_outgoing_state(node)
-    stage_objective = stage_objective_value(node, node.stage_objective)
-    cost_to_go_value = value(node.bellman_function.global_theta.theta)
-    intercept = JuMP.objective_value(node.subproblem)
-    _refine_lagrangian_model(
-        node,
-        intercept,
-        cost_to_go_value,
-        state,
-        outgoing_state,
-    )
-    @_timeit_threadsafe model.timer_output "get_dual_solution" begin
-        objective, dual_values = get_dual_solution(node, duality_handler)
-    end
-    state = outgoing_state
+    if duality_handler ===  nothing #|| true #Forward_pass
+        JuMP.optimize!(node.subproblem)
+        lock(model.lock) do
+            model.ext[:total_solves] = get(model.ext, :total_solves, 0) + 1
+            return
+        end
+        if JuMP.primal_status(node.subproblem) == JuMP.MOI.INTERRUPTED
+            # If the solver was interrupted, the user probably hit CTRL+C but the
+            # solver gracefully exited. Since we're in the middle of training or
+            # simulation, we need to throw an interrupt exception to keep the
+            # interrupt percolating up to the user.
+            throw(InterruptException())
+        end
+        if !_has_primal_solution(node)
+            attempt_numerical_recovery(model, node)
+        end
+        outgoing_state = get_outgoing_state(node)
+        stage_objective = stage_objective_value(node, node.stage_objective)
+        cost_to_go_value = value(node.bellman_function.global_theta.theta)
+        intercept = JuMP.objective_value(node.subproblem)
+        # _refine_lagrangian_model(
+        #     node,
+        #     intercept,
+        #     cost_to_go_value,
+        #     state,
+        #     noise,
+        #     outgoing_state,
+        # )
+        @_timeit_threadsafe model.timer_output "get_dual_solution" begin
+            objective, dual_values = get_dual_solution(node, duality_handler)
+        end
+        state = outgoing_state
 
-    if node.post_optimize_hook !== nothing
-        node.post_optimize_hook(pre_optimize_ret)
+        if node.post_optimize_hook !== nothing
+            node.post_optimize_hook(pre_optimize_ret)
+        end
+        return (
+            state = state,
+            duals = dual_values, #inutile
+            objective = objective,
+            stage_objective = stage_objective,
+        )
+    else #Backwardpass
+        # println(1)
+        @_timeit_threadsafe model.timer_output "get_dual_solution" begin
+            objective, dual_values = get_dual_solution(node, duality_handler)
+        end
+        # println(2)
+        if node.post_optimize_hook !== nothing
+            node.post_optimize_hook(pre_optimize_ret)
+        end
+        return (
+            state = state, #inutile
+            duals = dual_values,
+            objective = objective,
+            stage_objective = nothing, #inutile
+        )
     end
-    return (
-        state = state,
-        duals = dual_values,
-        objective = objective,
-        stage_objective = stage_objective,
-    )
 end
 
 # Internal function to get the objective state at the root node.
@@ -979,6 +1005,7 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
         forward_trajectory = forward_pass(model, options, options.forward_pass)
         options.forward_pass_callback(forward_trajectory)
     end
+    println("forward pass complete.")
     @_timeit_threadsafe model.timer_output "backward_pass" begin
         cuts = backward_pass(
             model,

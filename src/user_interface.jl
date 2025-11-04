@@ -640,8 +640,11 @@ end
 mutable struct LagrangianProblem
     model::JuMP.Model
     theta::JuMP.VariableRef
-    dual_variables::Dict{Symbol,JuMP.VariableRef}
-    constraints::Vector{Cut2}
+    dual_variables_state_in::Dict{Symbol,JuMP.VariableRef}
+    dual_variables_state_out::Dict{Symbol,JuMP.VariableRef}
+    dual_variables_uncertainty::Dict{Symbol,JuMP.VariableRef}
+    upper_constraint::Union{Nothing, JuMP.ConstraintRef}
+    cuts::Vector{Cut2}
 end
 
 mutable struct Node{T}
@@ -902,10 +905,50 @@ end
 
 function _initialize_lagrangian_problem(node::Node)
     lagrangian = node.lagrangian
-    model = lagrangian.model
-    keys_collection = collect(keys(node.states))
-    @variable(model, λ[k in keys_collection])
-    node.lagrangian.dual_variables = Dict{Symbol, JuMP.VariableRef}(k => λ[k] for k in keys_collection)
+    mod = node.subproblem
+    for (name, uncertainty) in node.uncertainties
+        JuMP.unfix(uncertainty.var)
+    end
+    undo_relax = JuMP.relax_integrality(mod)
+    new_model, _ = @suppress copy_model(mod)
+    undo_relax()
+    # if node.index == 24
+    #     println(new_model)
+    # end
+    copy_state_out = Dict()
+    copy_state_in = Dict()
+    copy_uncertainty = Dict()
+    for (name, _) in node.states
+        copy_state_out[name] = JuMP.variable_by_name(new_model, string(name,"_out"))
+        copy_state_in[name] = JuMP.variable_by_name(new_model, string(name,"_in"))
+    end
+    for (name, _) in node.uncertainties
+        copy_uncertainty[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+    @constraint(new_model, fix_out[name in keys(copy_state_out)], copy_state_out[name] == 0.0)
+    @constraint(new_model, fix_in[name in keys(copy_state_in)], copy_state_in[name] == 0.0)
+    @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+    md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+    hexpr = JuMP.objective_function(md)
+    node_index = node.index
+    theta = @variable(
+        md,
+        base_name = "theta_$(node_index)",
+    )
+    cstr = @constraint(md, theta <= hexpr)
+    JuMP.set_objective_function(
+        md,
+            @expression(md, theta),
+    )
+    # if node.index == 24
+    #     println(md)
+    # end
+    lagrangian.dual_variables_state_out = Dict(name => md[Symbol("dual_var_fix_out[$name]")] for name in keys(copy_state_out))
+    lagrangian.dual_variables_state_in = Dict(name => md[Symbol("dual_var_fix_in[$name]")] for name in keys(copy_state_in))
+    lagrangian.dual_variables_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
+    lagrangian.upper_constraint = cstr
+    lagrangian.model = md
+    lagrangian.theta = theta
     return
 end
 
@@ -1008,12 +1051,12 @@ function PolicyGraph(
             lagrangian,
             base_name = "theta_$(node_index)",
         )
-        JuMP.set_objective_function(
-        lagrangian,
-            @expression(lagrangian, theta),
-        )
+        # JuMP.set_objective_function(
+        # lagrangian,
+        #     @expression(lagrangian, theta),
+        # )
         # set_optimizer_attribute(lagrangian, "DualReductions", 0)
-        lagrangian_problem = LagrangianProblem(lagrangian, theta, Dict{Symbol,JuMP.VariableRef}(), Cut2[])
+        lagrangian_problem = LagrangianProblem(lagrangian, theta, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), nothing, Cut2[])
         node = Node(
             node_index,
             subproblem,
@@ -1047,12 +1090,6 @@ function PolicyGraph(
         policy_graph.nodes[node_index] = subproblem.ext[:RDDIP_node] = node
         JuMP.set_objective_sense(subproblem, policy_graph.objective_sense)
         builder(instance, force, subproblem, node_index)
-        _initialize_lagrangian_problem(node)
-        if policy_graph.objective_sense == MOI.MIN_SENSE
-            JuMP.set_objective_sense(lagrangian_problem.model, MOI.MAX_SENSE)
-        else
-            JuMP.set_objective_sense(lagrangian_problem.model, MOI.MIN_SENSE)
-        end
         # Add a dummy noise here so that all nodes have at least one noise term.
         if length(node.noise_terms) == 0
             push!(node.noise_terms, Noise(nothing, 1.0))
@@ -1118,6 +1155,7 @@ function PolicyGraph(
             #     JuMP.set_binary(state.in)
             # end
         end
+        _initialize_lagrangian_problem(node)
     end
     return policy_graph
 end
@@ -1303,10 +1341,81 @@ function parameterize(
     if length(node.noise_terms) != 0
         error("Duplicate calls to RDDIP.parameterize detected.")
     end
+    # Collect uncertainty keys for this node (if any). Use insertion order.
+    uncertainty_keys = collect(keys(node.uncertainties))
     for (realization, prob) in zip(realizations, probability)
-        push!(node.noise_terms, Noise(realization, prob))
+        term = realization
+        # If there are uncertainties registered on the node and the
+        # realization is a vector (or scalar), convert it into a Dict that
+        # maps the uncertainty variable symbols to the realization values.
+        if !isempty(uncertainty_keys)
+            if realization isa AbstractVector && length(realization) == length(uncertainty_keys)
+                d = Dict{Symbol,Float64}()
+                for (i, k) in enumerate(uncertainty_keys)
+                    v = realization[i]
+                    if !(v isa Number)
+                        error("Realization value for $(k) is not numeric: $(v)")
+                    end
+                    d[k] = Float64(v)
+                end
+                term = d
+            elseif !(realization isa AbstractDict) && length(uncertainty_keys) == 1
+                # Single uncertainty: accept a scalar realization and map it.
+                v = realization
+                if !(v isa Number)
+                    error("Realization value for $(uncertainty_keys[1]) is not numeric: $(v)")
+                end
+                d = Dict{Symbol,Float64}(uncertainty_keys[1] => Float64(v))
+                term = d
+            end
+        end
+        push!(node.noise_terms, Noise(term, prob))
     end
-    node.parameterize = modify
+
+    # Wrap the user-provided modify function to accept either the original
+    # vector/scalar form or the new Dict form. The wrapper will try calling
+    # `modify` with the noise as-is first; if that errors with a MethodError or
+    # BoundsError, it will attempt to convert between vector <-> dict and call
+    # `modify` again for compatibility.
+    node.parameterize = function(noise)
+        try
+            return modify(noise)
+        catch err
+            if isa(err, MethodError) || isa(err, BoundsError)
+                # Attempt conversion.
+                try
+                    if noise isa AbstractDict
+                        # Convert dict -> vector in the same order as uncertainty_keys
+                        vec = Vector{Float64}(undef, length(uncertainty_keys))
+                        for (i, k) in enumerate(uncertainty_keys)
+                            v = get(noise, k, nothing)
+                            if !(v isa Number)
+                                error("Realization for $(k) is not numeric: $(v)")
+                            end
+                            vec[i] = Float64(v)
+                        end
+                        return modify(vec)
+                    elseif noise isa AbstractVector && !isempty(uncertainty_keys)
+                        d = Dict{Symbol,Float64}()
+                        for (i, k) in enumerate(uncertainty_keys)
+                            v = noise[i]
+                            if !(v isa Number)
+                                error("Realization value for $(k) is not numeric: $(v)")
+                            end
+                            d[k] = Float64(v)
+                        end
+                        return modify(d)
+                    else
+                        rethrow(err)
+                    end
+                catch
+                    rethrow(err)
+                end
+            else
+                rethrow(err)
+            end
+        end
+    end
     return
 end
 

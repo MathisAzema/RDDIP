@@ -622,6 +622,7 @@ function InnerPolicyGraph(
             RDDIP.Noise[],
             (ω) -> nothing,
             Dict{Symbol,RDDIP.State{JuMP.VariableRef}}(),
+            Dict{Symbol,RDDIP.Uncertain{JuMP.VariableRef}}(),
             0.0,
             false,
             # Delay initializing the bellman function until later so that it can

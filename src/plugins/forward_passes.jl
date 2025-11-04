@@ -119,9 +119,9 @@ function forward_pass(
             # Add the outgoing state variable to the list of states we have sampled
             # on this forward pass.
             push!(sampled_states, incoming_state_value)
-            if node_index == 1
-                println("Lower bound: ", objective_value(node.subproblem))
-            end
+            # if node_index == 1
+            #     println("Lower bound: ", objective_value(node.subproblem))
+            # end
             # println(node.index, " ", objective_value(node.subproblem))
         finally
             unlock(node.lock)
