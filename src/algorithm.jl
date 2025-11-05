@@ -1005,7 +1005,7 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
         forward_trajectory = forward_pass(model, options, options.forward_pass)
         options.forward_pass_callback(forward_trajectory)
     end
-    println("forward pass complete.")
+    # println("forward pass complete.")
     @_timeit_threadsafe model.timer_output "backward_pass" begin
         cuts = backward_pass(
             model,

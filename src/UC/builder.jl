@@ -145,15 +145,11 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
         if thermal_units[i].InitUpDownTime!=nothing
             if thermal_units[i].InitUpDownTime>0
                 for k in 0:thermal_units[i].MinUpTime-1
-                    if k<thermal_units[i].InitUpDownTime
-                        initup[i][k+1]=1
-                    end
+                    initup[i][k+1] = (k==min(thermal_units[i].InitUpDownTime-1, thermal_units[i].MinUpTime-1))
                 end
             elseif thermal_units[i].InitUpDownTime<0
                 for k in 0:thermal_units[i].MinDownTime-1
-                    if k<-thermal_units[i].InitUpDownTime
-                        initdown[i][k+1]=1
-                    end
+                    initdown[i][k+1] = (k==min(-thermal_units[i].InitUpDownTime-1, thermal_units[i].MinDownTime-1))
                 end
             end
         end
@@ -188,7 +184,7 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
 
         # Random variables
     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
-    M = 5
+    M = 1
     Ω = [[(-1.0+(s-1)*0.5) for b in BusWind] for s in 1:M]
     P = [1/M for s in 1:M]
     # Ω = [[0.0 for b in BusWind]]

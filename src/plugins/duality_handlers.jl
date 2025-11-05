@@ -612,7 +612,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         return conic_obj, conic_state_dual  # If we're linear, return this!
     end
     num_states = length(node.states)
-    λ_k, x = zeros(num_states), zeros(num_states)
+    λ_k, h_k, x = zeros(num_states), zeros(num_states), zeros(num_states)
     h_expr = Vector{AffExpr}(undef, num_states)
     outgoing_lagrangian_heur = Dict{Symbol,Float64}()
     for (i, (key, state)) in enumerate(node.states)
@@ -622,6 +622,8 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         JuMP.unfix(state.in)
         λ_k[i] = conic_state_dual[key]
     end
+
+    lagrangian_obj = _solve_primal_problem(node.subproblem, λ_k, h_expr, h_k)
 
     num_uncertainties = length(node.uncertainties)
     μ_k, ξ = zeros(num_uncertainties), zeros(num_uncertainties)
@@ -633,23 +635,17 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         μ_k[i] = conic_uncertainty_dual[key]
     end
 
-    lagrangian_obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values = _solve_primal_problem_b(node, node.subproblem, λ_k, h_expr, μ_k, g_expr)
-    intercept = lagrangian_obj - sum(λ_k[i] * (x[i] - incoming_state_values[k]) for (i, k) in enumerate(keys(node.states))) - sum(μ_k[i] * (ξ[i] - incoming_uncertainty_values[k]) for (i, k) in enumerate(keys(node.uncertainties)))
-    if node.index == 2
-        # println(cost_to_go_value)
-        # println(lagrangian_obj)
-        # println(objective_value(node.subproblem))
-    end
-    # println("0")
-    _refine_lagrangian_model(
-        node,
-        intercept,
-        cost_to_go_value,
-        incoming_state_values,
-        incoming_uncertainty_values,
-        outgoing_state_values,
-    )
-    # println("1")
+    # lagrangian_obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values = _solve_primal_problem_b(node, node.subproblem, λ_k, h_expr, μ_k, g_expr)
+    # intercept = lagrangian_obj - sum(λ_k[i] * (x[i] - incoming_state_values[k]) for (i, k) in enumerate(keys(node.states))) - sum(μ_k[i] * (ξ[i] - incoming_uncertainty_values[k]) for (i, k) in enumerate(keys(node.uncertainties)))
+
+    # _refine_lagrangian_model(
+    #     node,
+    #     intercept,
+    #     cost_to_go_value,
+    #     incoming_state_values,
+    #     incoming_uncertainty_values,
+    #     outgoing_state_values,
+    # )
 
     value_lagrange, λ_L, μ_L = _solve_lagrangian_problem(
         node,
@@ -671,6 +667,9 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
     end
     # println("h")
     # println(value_lagrange)
+    for (i, (_, uncertainty)) in enumerate(node.uncertainties)
+        JuMP.fix(uncertainty.var, ξ[i]; force = true)
+    end
     lagrangian_obj2, cost_to_go_value2, incoming_state_values2, incoming_uncertainty_values2, outgoing_state_values2 = _solve_primal_problem_b(node, node.subproblem, λ_k2, h_expr, μ_k2, g_expr)
     # println("h1")
     intercept2 = lagrangian_obj2 - sum(λ_k2[i] * (x[i] - incoming_state_values2[k]) for (i, k) in enumerate(keys(node.states))) - sum(μ_k2[i] * (ξ[i] - incoming_uncertainty_values2[k]) for (i, k) in enumerate(keys(node.uncertainties)))
@@ -692,16 +691,14 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
     for (i, (_, state)) in enumerate(node.states)
         JuMP.fix(state.in, x[i]; force = true)
     end
-    for (i, (_, uncertainty)) in enumerate(node.uncertainties)
-        JuMP.fix(uncertainty.var, ξ[i]; force = true)
-    end
+
 
     if value_lagrange != nothing
         # if node.index == 2
         #     println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
         # end
         if lagrangian_obj2 > lagrangian_obj 
-            # println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
+            println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
             return lagrangian_obj2, λ_L
         end
     end
