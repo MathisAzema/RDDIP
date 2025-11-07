@@ -367,7 +367,7 @@ function numerical_stability_report(
         node = model[key]
         node_ranges = CoefficientRanges()
         for noise in node.noise_terms
-            parameterize(node, noise.term)
+            parameterizeb(node, noise.term)
             node_ranges_2 = _coefficient_ranges(node.subproblem)
             _merge(node_ranges, node_ranges_2)
         end

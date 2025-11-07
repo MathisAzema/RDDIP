@@ -232,7 +232,104 @@ function extended_extensive_neutral(instance; silent=true,  force::Float64=1.0, 
     end
 end
 
-function bin_extensive_neutral_integer(instance; K=5, silent=true,  Tmax::Int64=24, force::Float64=1.0, S::Int64=5, batch=1, gap=gap, timelimit=10)
+# function bin_extensive_neutral_integer(instance; K=5, silent=true,  Tmax::Int64=24, force::Float64=1.0, S::Int64=5, batch=1, gap=gap, timelimit=10)
+#     """
+#     Solve the two stage SUC with 3-bin extensive formulation
+#     """
+
+#     model = Model(instance.optimizer)
+#     if silent
+#         set_silent(model)
+#     end
+
+#     T= instance.TimeHorizon
+#     thermal_units_name=keys(instance.Thermalunits)
+#     thermal_units=values(instance.Thermalunits)
+
+#     T= instance.TimeHorizon
+#     thermal_units_name=keys(instance.Thermalunits)
+#     thermal_units=values(instance.Thermalunits)
+
+#     Next=instance.Next
+#     Buses=1:size(Next)[1]
+#     @variable(model, power[unit in thermal_units_name, t in 0:T, s in 1:S]>=0)
+#     @variable(model, power_real[unit in thermal_units_name, t in 0:T, s in 1:S]>=0)
+#     @variable(model, power_shedding[b in Buses, t in 0:T, s in 1:S]>=0)
+#     @variable(model, power_curtailement[b in Buses, t in 0:T, s in 1:S]>=0)
+#     @variable(model, is_on[unit in thermal_units_name, t in 0:T, s in 1:S], Bin)
+#     @variable(model, start_up[unit in thermal_units_name, t in 1:T, s in 1:S], Bin)
+#     @variable(model, start_down[unit in thermal_units_name, t in 1:T, s in 1:S], Bin)
+
+#     # @constraint(model,  [unit in thermal_units_name, t in 1:T, s in 1:S], is_on[unit,t,s] == 1)
+
+
+#     @variable(model, power_integer[unit in thermal_units_name, t in 0:T, s in 1:S, k in 1:K], Bin)
+#     @variable(model, power_dev[unit in thermal_units_name, t in 0:T, s in 1:S])
+#     @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_dev[unit.name,t,s]<=0.5*is_on[unit.name,t,s]*(unit.MaxPower-unit.MinPower)/(K-1))
+#     @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_dev[unit.name,t,s]>=-0.5*is_on[unit.name,t,s]*(unit.MaxPower-unit.MinPower)/(K-1))
+#     @constraint(model,  [unit in thermal_units, t in 0:T, s in 1:S], power[unit.name,t,s]==sum(power_integer[unit.name,t,s,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
+#     @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_real[unit.name,t,s]==power_dev[unit.name,t,s]+sum(power_integer[unit.name,t,s,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
+#     @constraint(model,  [unit in thermal_units, t in 0:T, s in 1:S], sum(power_integer[unit.name,t,s,k] for k in 1:K)==is_on[unit.name,t,s])
+
+#     @constraint(model,  [unit in thermal_units_name, t in 0:Tmax, s in 2:S], is_on[unit, t, s] == is_on[unit, t, 1])
+
+#     @variable(model, thermal_fuel_cost[s in 1:S]>=0)
+#     @variable(model, thermal_fixed_cost[s in 1:S]>=0)
+#     @variable(model, thermal_cost>=0)
+
+#     @constraint(model,  thermal_cost>=sum(thermal_fuel_cost[s] for s in 1:S)/S+sum(thermal_fixed_cost[s] for s in 1:S)/S)
+
+#     thermal_unit_commit_constraints2(model, instance, S)
+#     thermal_unit_capacity_constraints_scenarios2(model, instance, S)
+
+#     idx_list = [0 for unit in thermal_units]
+
+#     for unit in thermal_units
+#         initpower = unit.InitialPower
+#         power_levels = [0.0; [unit.MinPower + (k-1)*(unit.MaxPower - unit.MinPower)/(K-1) for k in 1:K]]
+#         idx = argmin(abs.(power_levels .- initpower))
+#         idx_list[unit.name] = idx-1
+#     end
+#     @constraint(model,  [unit in thermal_units_name, s in 1:S; idx_list[unit]>=1], power_integer[unit, 0, s, idx_list[unit]]==1)
+#     @variable(model, θ[b in Buses, t in 1:T, s in 1:S])
+#     @variable(model, flow[b in Buses, bp in Next[b], t in 1:T, s in 1:S])
+#     flow_constraints_scenarios(model,instance,S)
+
+#     BusWind=instance.BusWind
+#     NumWindfarms=length(BusWind)
+#     Wpower=instance.WGscenario
+#     List_scenario=instance.Training_set[batch]
+
+#     @constraint(model,  demand[t in 1:T, b in Buses, s in 1:S], sum(power_real[unit.name, t, s] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t,s]-power_curtailement[b,t,s]==instance.Demandbus[b][t]+sum(flow[b,bp,t,s] for bp in Next[b])-force * sum(Wpower[w][t,List_scenario[s]] for w in 1:NumWindfarms if BusWind[w]==b))
+
+#     @objective(model, Min, thermal_cost)
+  
+#     set_optimizer_attribute(model, "TimeLimit", timelimit)
+#     set_optimizer_attribute(model, "Threads", 1)
+#     set_optimizer_attribute(model, "MIPGap", gap)
+
+#     start = time()
+#     optimize!(model)
+#     computation_time = time() - start
+
+#     feasibleSolutionFound = primal_status(model) == MOI.FEASIBLE_POINT
+
+#     if feasibleSolutionFound
+
+#         # solution_is_on=JuMP.value.(is_on)
+#         # solution_start_up=JuMP.value.(start_up)
+#         # solution_start_down=JuMP.value.(start_down)
+
+#         # solution_thermal=[solution_is_on, solution_start_up, solution_start_down]
+
+#         # return instance.name, computation_time, objective_value(model), objective_bound(model), solution_thermal, S, batch,  gap, force, value.(power)
+#         return value.(power_dev), value.(power_integer), value.(power), value.(is_on), value.(power_real)
+#     else
+#         return nothing
+#     end
+# end
+
+function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, timelimit=10)
     """
     Solve the two stage SUC with 3-bin extensive formulation
     """
@@ -252,35 +349,60 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true,  Tmax::Int64=
 
     Next=instance.Next
     Buses=1:size(Next)[1]
-    @variable(model, power[unit in thermal_units_name, t in 0:T, s in 1:S]>=0)
-    @variable(model, power_real[unit in thermal_units_name, t in 0:T, s in 1:S]>=0)
-    @variable(model, power_shedding[b in Buses, t in 0:T, s in 1:S]>=0)
-    @variable(model, power_curtailement[b in Buses, t in 0:T, s in 1:S]>=0)
-    @variable(model, is_on[unit in thermal_units_name, t in 0:T, s in 1:S], Bin)
-    @variable(model, start_up[unit in thermal_units_name, t in 1:T, s in 1:S], Bin)
-    @variable(model, start_down[unit in thermal_units_name, t in 1:T, s in 1:S], Bin)
-
-    # @constraint(model,  [unit in thermal_units_name, t in 1:T, s in 1:S], is_on[unit,t,s] == 1)
+    @variable(model, power[unit in thermal_units_name, t in 0:T]>=0)
+    @variable(model, power_real[unit in thermal_units_name, t in 0:T]>=0)
+    @variable(model, power_shedding[b in Buses, t in 0:T]>=0)
+    @variable(model, power_curtailement[b in Buses, t in 0:T]>=0)
+    @variable(model, is_on[unit in thermal_units_name, t in 0:T], Bin)
+    @variable(model, start_up[unit in thermal_units_name, t in 1:T], Bin)
+    @variable(model, start_down[unit in thermal_units_name, t in 1:T], Bin)
 
 
-    @variable(model, power_integer[unit in thermal_units_name, t in 0:T, s in 1:S, k in 1:K], Bin)
-    @variable(model, power_dev[unit in thermal_units_name, t in 0:T, s in 1:S])
-    @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_dev[unit.name,t,s]<=0.5*is_on[unit.name,t,s]*(unit.MaxPower-unit.MinPower)/(K-1))
-    @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_dev[unit.name,t,s]>=-0.5*is_on[unit.name,t,s]*(unit.MaxPower-unit.MinPower)/(K-1))
-    @constraint(model,  [unit in thermal_units, t in 0:T, s in 1:S], power[unit.name,t,s]==sum(power_integer[unit.name,t,s,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
-    @constraint(model,  [unit in thermal_units, t in 1:T, s in 1:S], power_real[unit.name,t,s]==power_dev[unit.name,t,s]+sum(power_integer[unit.name,t,s,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
-    @constraint(model,  [unit in thermal_units, t in 0:T, s in 1:S], sum(power_integer[unit.name,t,s,k] for k in 1:K)==is_on[unit.name,t,s])
+    @variable(model, power_integer[unit in thermal_units_name, t in 0:T, k in 1:K], Bin)
+    @variable(model, power_dev[unit in thermal_units_name, t in 0:T])
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]<=0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]>=-0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name,t]==sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_real[unit.name,t]==power_dev[unit.name,t]+sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
+    @constraint(model,  [unit in thermal_units, t in 0:T], sum(power_integer[unit.name,t,k] for k in 1:K)==is_on[unit.name,t])
 
-    @constraint(model,  [unit in thermal_units_name, t in 0:Tmax, s in 2:S], is_on[unit, t, s] == is_on[unit, t, 1])
+    # @constraint(model,  [unit in thermal_units, t in 1:T], is_on[unit.name,t] == 1)
+    # @constraint(model, power_integer[1,6,3]==1)
 
-    @variable(model, thermal_fuel_cost[s in 1:S]>=0)
-    @variable(model, thermal_fixed_cost[s in 1:S]>=0)
-    @variable(model, thermal_cost>=0)
+    # @constraint(model, power_integer[1,6,3]==1)
+    # @constraint(model, power_integer[2,6,3]==1)
+    # @constraint(model, power_integer[3,6,3]==1)
+    # @constraint(model, power_integer[4,6,1]==1)
+    # @constraint(model, power_integer[5,6,1]==1)
 
-    @constraint(model,  thermal_cost>=sum(thermal_fuel_cost[s] for s in 1:S)/S+sum(thermal_fixed_cost[s] for s in 1:S)/S)
+    # @constraint(model, power_integer[2,7,3]==1)
 
-    thermal_unit_commit_constraints2(model, instance, S)
-    thermal_unit_capacity_constraints_scenarios2(model, instance, S)
+    @variable(model, thermal_fuel_cost[t in 1:T]>=0)
+    @variable(model, thermal_fixed_cost[t in 1:T]>=0)
+    @variable(model, thermal_cost[t in 1:T]>=0)
+
+    @constraint(model,  [t in 1:T], thermal_cost[t]>=  thermal_fuel_cost[t] + thermal_fixed_cost[t])
+
+    @constraint(model,  [unit in thermal_units, t in 1:T], is_on[unit.name, t]-is_on[unit.name, t-1]==start_up[unit.name, t]-start_down[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_up[unit.name, t]<=is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_down[unit.name, t]<=1-is_on[unit.name, t])
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime!=nothing], is_on[unit.name, 0]==(unit.InitUpDownTime>=0))
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime==nothing], is_on[unit.name, 0]==0)
+
+    @constraint(model, [t in 1:T], thermal_fixed_cost[t]>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units))
+
+    @constraint(model,  [unit in thermal_units, t in 0:T], power_real[unit.name, t]>=unit.MinPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 0:T], power_real[unit.name, t]<=unit.MaxPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]>=unit.MinPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]<=unit.MaxPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units; unit.InitialPower!=nothing], power_real[unit.name, 0]==unit.InitialPower)
+
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_real[unit.name, t]-power[unit.name, t-1]<=(-unit.DeltaRampUp)*start_up[unit.name, t]+(unit.MinPower+unit.DeltaRampUp)*is_on[unit.name, t]-(unit.MinPower)*is_on[unit.name, t-1])
+    @constraint(model,  [unit in thermal_units, t in 1:T], power[unit.name, t-1]-power_real[unit.name, t]<=(-unit.DeltaRampDown)*start_down[unit.name, t]+(unit.MinPower+unit.DeltaRampDown)*is_on[unit.name, t-1]-(unit.MinPower)*is_on[unit.name, t])
+
+    @constraint(model,  [t in 1:T], thermal_fuel_cost[t]>=sum(unit.LinearTerm*power_real[unit.name, t] for unit in thermal_units)+sum(SHEDDING_COST*power_shedding[b,t]+CURTAILEMENT_COST*power_curtailement[b,t] for b in Buses))
 
     idx_list = [0 for unit in thermal_units]
 
@@ -290,19 +412,19 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true,  Tmax::Int64=
         idx = argmin(abs.(power_levels .- initpower))
         idx_list[unit.name] = idx-1
     end
-    @constraint(model,  [unit in thermal_units_name, s in 1:S; idx_list[unit]>=1], power_integer[unit, 0, s, idx_list[unit]]==1)
-    @variable(model, θ[b in Buses, t in 1:T, s in 1:S])
-    @variable(model, flow[b in Buses, bp in Next[b], t in 1:T, s in 1:S])
-    flow_constraints_scenarios(model,instance,S)
+    @constraint(model,  [unit in thermal_units_name; idx_list[unit]>=1], power_integer[unit, 0, idx_list[unit]]==1)
+    @variable(model, θ[b in Buses, t in 1:T])
+    @variable(model, flow[b in Buses, bp in Next[b], t in 1:T])
+    
 
-    BusWind=instance.BusWind
-    NumWindfarms=length(BusWind)
-    Wpower=instance.WGscenario
-    List_scenario=instance.Training_set[batch]
+    Lines=values(instance.Lines)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]<=line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]>=-line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]==line.B12*(θ[line.b1,t]-θ[line.b2,t]))
 
-    @constraint(model,  demand[t in 1:T, b in Buses, s in 1:S], sum(power_real[unit.name, t, s] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t,s]-power_curtailement[b,t,s]==instance.Demandbus[b][t]+sum(flow[b,bp,t,s] for bp in Next[b])-force * sum(Wpower[w][t,List_scenario[s]] for w in 1:NumWindfarms if BusWind[w]==b))
+    @constraint(model,  demand[t in 1:T, b in Buses], sum(power_real[unit.name, t] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t]-power_curtailement[b,t]==instance.Demandbus[b][t]+sum(flow[b,bp,t] for bp in Next[b]))
 
-    @objective(model, Min, thermal_cost)
+    @objective(model, Min, sum(thermal_cost[t] for t in 1:T))
   
     set_optimizer_attribute(model, "TimeLimit", timelimit)
     set_optimizer_attribute(model, "Threads", 1)
@@ -323,7 +445,7 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true,  Tmax::Int64=
         # solution_thermal=[solution_is_on, solution_start_up, solution_start_down]
 
         # return instance.name, computation_time, objective_value(model), objective_bound(model), solution_thermal, S, batch,  gap, force, value.(power)
-        return value.(power_dev), value.(power_integer), value.(power), value.(is_on), value.(power_real)
+        return value.(power_dev), value.(power_integer), value.(power), value.(is_on), value.(power_real), value.(thermal_cost)
     else
         return nothing
     end

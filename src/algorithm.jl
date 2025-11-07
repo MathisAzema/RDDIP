@@ -176,6 +176,13 @@ function set_incoming_state(node::Node, state::Dict{Symbol,Float64})
     return
 end
 
+function set_incoming_state_upper(node::Node, state::Dict{Symbol,Float64})
+    for (state_name, value) in state
+        JuMP.fix(node.states_upper[state_name].in, value; force=true)
+    end
+    return
+end
+
 # Internal function: get the values of the outgoing state variables in node.
 # Requires node.subproblem to have been solved with PrimalStatus ==
 # FeasiblePoint.
@@ -211,23 +218,38 @@ end
 
 # Internal function: set the objective of node to the stage objective, plus the
 # cost/value-to-go term.
+# function set_objective(node::Node{T}) where {T}
+#     objective_state_component = get_objective_state_component(node)
+#     belief_state_component = get_belief_state_component(node)
+#     if objective_state_component != JuMP.AffExpr(0.0) ||
+#        belief_state_component != JuMP.AffExpr(0.0)
+#         node.stage_objective_set = false
+#     end
+#     if !node.stage_objective_set
+#         JuMP.set_objective(
+#             node.subproblem,
+#             JuMP.objective_sense(node.subproblem),
+#             @expression(
+#                 node.subproblem,
+#                 node.stage_objective +
+#                 objective_state_component +
+#                 belief_state_component +
+#                 bellman_term(node.bellman_function)
+#             )
+#         )
+#     end
+#     node.stage_objective_set = true
+#     return
+# end
+
 function set_objective(node::Node{T}) where {T}
-    objective_state_component = get_objective_state_component(node)
-    belief_state_component = get_belief_state_component(node)
-    if objective_state_component != JuMP.AffExpr(0.0) ||
-       belief_state_component != JuMP.AffExpr(0.0)
-        node.stage_objective_set = false
-    end
     if !node.stage_objective_set
         JuMP.set_objective(
             node.subproblem,
             JuMP.objective_sense(node.subproblem),
             @expression(
                 node.subproblem,
-                node.stage_objective +
-                objective_state_component +
-                belief_state_component +
-                bellman_term(node.bellman_function)
+                node.stage_objective
             )
         )
     end
@@ -300,7 +322,22 @@ Parameterize node `node` with the noise `noise`.
 """
 function parameterize(node::Node, noise)
     node.parameterize(noise)
-    set_objective(node)
+    # set_objective(node)
+    return
+end
+
+function parameterizeb(node::Node, noise)
+    for (name, var) in node.uncertainties
+        JuMP.fix(var, noise[name])
+    end
+    # set_objective(node)
+    return
+end
+
+function parameterize_upper(node::Node, noise)
+    for (name, var) in node.uncertainties_upper
+        JuMP.fix(var, noise[name])
+    end
     return
 end
 
@@ -440,10 +477,10 @@ function _initialize_solver(node::Node; throw_error::Bool)
           """,
             )
         end
-        set_optimizer(node.subproblem, node.optimizer)
-        set_silent(node.subproblem)
-        set_optimizer(node.lagrangian.model, node.optimizer)
-        set_silent(node.lagrangian.model)
+        # set_optimizer(node.subproblem, node.optimizer)
+        # set_silent(node.subproblem)
+        # set_optimizer(node.lagrangian.model, node.optimizer)
+        # set_silent(node.lagrangian.model)
     end
     return
 end
@@ -498,10 +535,9 @@ function solve_subproblem(
     model::PolicyGraph{T},
     node::Node{T},
     state::Dict{Symbol,Float64},
-    noise,
-    scenario_path::Vector{Tuple{T,S}};
+    noise;
     duality_handler::Union{Nothing,AbstractDualityHandler},
-) where {T,S}
+) where {T}
     # if node.index == 24
     #     println(duality_handler ===  nothing)
     # end
@@ -511,19 +547,7 @@ function solve_subproblem(
     # variables. Then parameterize the model depending on `noise`. Finally,
     # set the objective.
     set_incoming_state(node, state)
-    parameterize(node, noise)
-    pre_optimize_ret = if node.pre_optimize_hook !== nothing
-        node.pre_optimize_hook(
-            model,
-            node,
-            state,
-            noise,
-            scenario_path,
-            duality_handler,
-        )
-    else
-        nothing
-    end
+    parameterizeb(node, noise)
     if duality_handler ===  nothing #|| true #Forward_pass
         JuMP.optimize!(node.subproblem)
         lock(model.lock) do
@@ -544,22 +568,23 @@ function solve_subproblem(
         stage_objective = stage_objective_value(node, node.stage_objective)
         cost_to_go_value = value(node.bellman_function.global_theta.theta)
         intercept = JuMP.objective_value(node.subproblem)
-        # _refine_lagrangian_model(
-        #     node,
-        #     intercept,
-        #     cost_to_go_value,
-        #     state,
-        #     noise,
-        #     outgoing_state,
-        # )
+        # println((intercept, cost_to_go_value, stage_objective))
+        _refine_lagrangian_model(
+            node,
+            intercept,
+            cost_to_go_value,
+            state,
+            noise,
+            outgoing_state,
+            0,
+        )
         @_timeit_threadsafe model.timer_output "get_dual_solution" begin
             objective, dual_values = get_dual_solution(node, duality_handler)
         end
         state = outgoing_state
 
-        if node.post_optimize_hook !== nothing
-            node.post_optimize_hook(pre_optimize_ret)
-        end
+        # println(Jump.objective_function(node.subproblem))
+
         return (
             state = state,
             duals = dual_values, #inutile
@@ -572,9 +597,6 @@ function solve_subproblem(
             objective, dual_values = get_dual_solution(node, duality_handler)
         end
         # println(2)
-        if node.post_optimize_hook !== nothing
-            node.post_optimize_hook(pre_optimize_ret)
-        end
         return (
             state = state, #inutile
             duals = dual_values,
@@ -582,6 +604,51 @@ function solve_subproblem(
             stage_objective = nothing, #inutile
         )
     end
+end
+
+function solve_subproblem_upper(
+    model::PolicyGraph{T},
+    node::Node{T},
+    state::Dict{Symbol,Float64},
+    noise,
+) where {T}
+
+    set_incoming_state_upper(node, state)
+    parameterize_upper(node, noise)
+    JuMP.optimize!(node.uppersubproblem)
+    lock(model.lock) do
+        model.ext[:total_solves] = get(model.ext, :total_solves, 0) + 1
+        return
+    end
+    if JuMP.primal_status(node.uppersubproblem) == JuMP.MOI.INTERRUPTED
+        throw(InterruptException())
+    end
+
+    outgoing_state = Dict{Symbol,Float64}()
+    for (name, state) in node.states_upper
+        if JuMP.is_binary(state.out)
+            outgoing_state[name] = round(JuMP.value(state.out)) # avoid instabilities
+        else
+            outgoing_state[name] = JuMP.value(state.out)
+        end
+    end
+    cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
+    intercept = JuMP.objective_value(node.uppersubproblem)
+    _refine_lagrangian_model(
+        node,
+        intercept,
+        cost_to_go_value,
+        state,
+        noise,
+        outgoing_state,
+        1,
+    )
+    objective = JuMP.objective_value(node.uppersubproblem)
+
+    return (
+        objective = objective,
+        out_state = outgoing_state,
+    )
 end
 
 # Internal function to get the objective state at the root node.
@@ -649,126 +716,54 @@ function backward_pass(
     options::Options,
     scenario_path::Vector{Tuple{T,NoiseType}},
     sampled_states::Vector{Dict{Symbol,Float64}},
-    objective_states::Vector{NTuple{N,Float64}},
-    belief_states::Vector{Tuple{Int,Dict{T,Float64}}},
-) where {T,NoiseType,N}
+) where {T,NoiseType}
     # TODO(odow): improve storage type.
     cuts = Dict{T,Vector{Any}}(index => Any[] for index in keys(model.nodes))
     for index in length(scenario_path):-1:1
-        # println("Backward pass at index $index")
         outgoing_state = sampled_states[index]
-        objective_state = get(objective_states, index, nothing)
-        partition_index, belief_state = get(belief_states, index, (0, nothing))
         items = BackwardPassItems(T, Noise)
-        if belief_state !== nothing
-            # Update the cost-to-go function for partially observable model.
-            for (node_index, belief) in belief_state
-                if iszero(belief)
-                    continue
-                end
-                solve_all_children(
-                    model,
-                    model[node_index],
-                    items,
-                    belief,
-                    belief_state,
-                    objective_state,
-                    outgoing_state,
-                    options.backward_sampling_scheme,
-                    scenario_path[1:index],
-                    options.duality_handler,
-                    options,
-                )
-            end
-            # We need to refine our estimate at all nodes in the partition.
-            for node_index in model.belief_partition[partition_index]
-                node = model[node_index]
-                lock(node.lock)
-                try
-                    # Update belief state, etc.
-                    current_belief = node.belief_state::BeliefState{T}
-                    for (idx, belief) in belief_state
-                        current_belief.belief[idx] = belief
-                    end
-                    new_cuts = refine_bellman_function(
-                        model,
-                        node,
-                        node.bellman_function,
-                        options.risk_measures[node_index],
-                        outgoing_state,
-                        items.duals,
-                        items.supports,
-                        items.probability .* items.belief,
-                        items.objectives,
-                    )
-                    push!(cuts[node_index], new_cuts)
-                finally
-                    unlock(node.lock)
-                end
-            end
+
+        node_index, _ = scenario_path[index]
+        node = model[node_index]
+        if length(node.children) == 0
+            continue
+        end
+        if options.sampling_scheme == RobustMonteCarlo()
+            solve_all_children_robust(
+                model,
+                node,
+                items,
+                outgoing_state,
+                options.duality_handler,
+                options,
+            )
         else
-            node_index, _ = scenario_path[index]
-            node = model[node_index]
-            if length(node.children) == 0
-                continue
-            end
             solve_all_children(
                 model,
                 node,
                 items,
                 1.0,
-                belief_state,
-                objective_state,
                 outgoing_state,
                 options.backward_sampling_scheme,
                 scenario_path[1:index],
                 options.duality_handler,
                 options,
             )
-            new_cuts = refine_bellman_function(
-                model,
-                node,
-                node.bellman_function,
-                options.risk_measures[node_index],
-                outgoing_state,
-                items.duals,
-                items.supports,
-                items.probability,
-                items.objectives,
-            )
-            push!(cuts[node_index], new_cuts)
-            if options.refine_at_similar_nodes
-                # Refine the bellman function at other nodes with the same
-                # children, e.g., in the same stage of a Markovian policy graph.
-                for other_index in options.similar_children[node_index]
-                    copied_probability = similar(items.probability)
-                    other_node = model[other_index]
-                    # Need to check that every child of other_node is in this
-                    # list
-                    other_children = Set(c.term for c in other_node.children)
-                    # The order of setdiff(A, B) matters.
-                    @assert isempty(setdiff(other_children, Set(items.nodes)))
-                    for (idx, child_index) in enumerate(items.nodes)
-                        copied_probability[idx] =
-                            get(options.Φ, (other_index, child_index), 0.0) *
-                            items.supports[idx].probability
-                    end
-                    new_cuts = refine_bellman_function(
-                        model,
-                        other_node,
-                        other_node.bellman_function,
-                        options.risk_measures[other_index],
-                        outgoing_state,
-                        items.duals,
-                        items.supports,
-                        copied_probability,
-                        items.objectives,
-                    )
-                    push!(cuts[other_index], new_cuts)
-                end
-            end
         end
+        new_cuts = refine_bellman_function(
+            model,
+            node,
+            node.bellman_function,
+            options.risk_measures[node_index],
+            outgoing_state,
+            items.duals,
+            items.supports,
+            items.probability,
+            items.objectives,
+        )
+        push!(cuts[node_index], new_cuts)
     end
+    # println("Backward pass complete")
     return cuts
 end
 
@@ -799,8 +794,6 @@ function solve_all_children(
     node::Node{T},
     items::BackwardPassItems,
     belief::Float64,
-    belief_state,
-    objective_state,
     outgoing_state::Dict{Symbol,Float64},
     backward_sampling_scheme::AbstractBackwardSamplingScheme,
     scenario_path,
@@ -817,10 +810,6 @@ function solve_all_children(
         # why, but tests failed when I tried to remove this.
         #
         # See RDDIP.jl#796 and RDDIP.jl#797 for more discussion.
-        if belief_state !== nothing &&
-           isapprox(child.probability, 0.0; atol = 1e-6)
-            continue
-        end
         child_node = model[child.term]
         lock(child_node.lock)
         try
@@ -848,32 +837,14 @@ function solve_all_children(
                     push!(items.nodes, child_node.index)
                     push!(items.probability, items.probability[sol_index])
                     push!(items.objectives, items.objectives[sol_index])
-                    push!(items.belief, belief)
                 else
-                    # Update belief state, etc.
-                    if belief_state !== nothing
-                        current_belief = child_node.belief_state::BeliefState{T}
-                        current_belief.updater(
-                            current_belief.belief,
-                            belief_state,
-                            current_belief.partition_index,
-                            noise.term,
-                        )
-                    end
-                    if objective_state !== nothing
-                        update_objective_state(
-                            child_node.objective_state,
-                            objective_state,
-                            noise.term,
-                        )
-                    end
+
                     @_timeit_threadsafe model.timer_output "solve_subproblem" begin
                         subproblem_results = solve_subproblem(
                             model,
                             child_node,
                             outgoing_state,
-                            noise.term,
-                            scenario_path;
+                            noise.term;
                             duality_handler = duality_handler,
                         )
                     end
@@ -885,7 +856,6 @@ function solve_all_children(
                         child.probability * noise.probability,
                     )
                     push!(items.objectives, subproblem_results.objective)
-                    push!(items.belief, belief)
                     items.cached_solutions[(child.term, noise.term)] =
                         length(items.duals)
                 end
@@ -902,6 +872,61 @@ function solve_all_children(
     else
         # Drop the last element (i.e., the one we added).
         pop!(scenario_path)
+    end
+    return
+end
+
+function solve_all_children_robust(
+    model::PolicyGraph{T},
+    node::Node{T},
+    items::BackwardPassItems,
+    outgoing_state::Dict{Symbol,Float64},
+    duality_handler::Union{Nothing,AbstractDualityHandler},
+    options,
+) where {T}
+
+    for child in node.children
+        child_node = model[child.term]
+        lock(child_node.lock)
+        try
+            @_timeit_threadsafe model.timer_output "prepare_backward_pass" begin
+                restore_duality = prepare_backward_pass(
+                    child_node,
+                    options.duality_handler,
+                    options,
+                )
+            end
+            worstcase = get_worst_case_scenario_by_enumeration(
+                model,
+                child_node,
+                outgoing_state,
+                refine_upper_bound = true,
+            )
+            noise = worstcase.noise
+            @_timeit_threadsafe model.timer_output "solve_subproblem" begin
+                subproblem_results = solve_subproblem(
+                    model,
+                    child_node,
+                    outgoing_state,
+                    noise;
+                    duality_handler = duality_handler,
+                )
+            end
+            # println(subproblem_results.objective)
+            push!(items.duals, subproblem_results.duals)
+            push!(items.supports, Noise(noise, 1.0))
+            push!(items.nodes, child_node.index)
+            push!(
+                items.probability,
+                1.0,
+            )
+            push!(items.objectives, subproblem_results.objective)
+            @_timeit_threadsafe model.timer_output "prepare_backward_pass" begin
+                restore_duality()
+            end
+        finally
+            unlock(child_node.lock)
+        end
     end
     return
 end
@@ -961,8 +986,7 @@ function calculate_bound(
                     model,
                     node,
                     root_state,
-                    noise.term,
-                    Tuple{T,Any}[(child.term, noise.term)];
+                    noise.term;
                     duality_handler = nothing,
                 )
                 push!(objectives, subproblem_results.objective)
@@ -1012,8 +1036,6 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
             options,
             forward_trajectory.scenario_path,
             forward_trajectory.sampled_states,
-            forward_trajectory.objective_states,
-            forward_trajectory.belief_states,
         )
     end
     # println("backward pass complete.")
@@ -1426,8 +1448,7 @@ function _simulate(
                 model,
                 node,
                 incoming_state,
-                noise,
-                scenario_path[1:depth];
+                noise;
                 duality_handler = duality_handler,
             )
             # Add the stage-objective
@@ -1654,8 +1675,7 @@ function evaluate(
         rule.model,
         rule.node,
         incoming_state,
-        noise,
-        Tuple{T,Any}[];
+        noise;
         duality_handler = nothing,
     )
     return (

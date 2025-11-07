@@ -106,7 +106,6 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     BusWind=instance.BusWind
     NumWindfarms=length(BusWind)
 
-    # @variable(subproblem, 0.0 <= power[i = 1:N] <= thermal_units[i].MaxPower, RDDIP.State, initial_value = thermal_units[i].InitialPower)
     
     @variable(subproblem, is_on[i = 1:N], Bin, RDDIP.State, initial_value = thermal_units[i].InitUpDownTime>0) #initial value fictive
     @variable(subproblem, start_up[i = 1:N], Bin)
@@ -138,6 +137,10 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].in for k in 1:K) == is_on[i].in)
 
     # @constraint(subproblem, [i in 1:N], is_on[i].out == 1)
+    # if node == 3
+    #     @constraint(subproblem, [i = 1:4], power_integer[i,3].out == 1)
+    #     @constraint(subproblem, power_integer[5,1].out == 1)
+    # end
 
     initup=[[0 for k in 0:thermal_units[i].MinUpTime-1] for i in 1:N]
     initdown=[[0 for k in 0:thermal_units[i].MinDownTime-1] for i in 1:N]
@@ -197,24 +200,32 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @constraint(subproblem, sum(uncertainty[s].var for s in 1:length(P)) == 1)
     @constraint(subproblem, [k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
     Ωs = [[1*(k==s) for k in 1:length(P)] for s in 1:length(P)]
-    RDDIP.parameterize(subproblem, Ωs, P) do ω
+    # RDDIP.parameterize(subproblem, Ωs, P) do ω
+    #     for k in 1:length(P)
+    #         # Prefer dictionary access using the uncertainty variable symbol
+    #         key = Symbol("uncertainty[$k]")
+    #         val = nothing
+    #         if isa(ω, AbstractDict)
+    #             val = get(ω, key, nothing)
+    #         end
+    #         if val === nothing
+    #             # Fallback to vector-like indexing for backward compatibility
+    #             if isa(ω, AbstractVector) && length(ω) >= k
+    #                 val = ω[k]
+    #             else
+    #                 error("No realization available for uncertainty $(key)")
+    #             end
+    #         end
+    #         JuMP.fix(uncertainty[k].var, val)
+    #     end
+    # end
+
+    Scenario = [Dict{Symbol, Float64}() for s in 1:length(P)]
+    # println(Scenario)
+    for s in 1:length(P)
         for k in 1:length(P)
-            # Prefer dictionary access using the uncertainty variable symbol
-            key = Symbol("uncertainty[$k]")
-            val = nothing
-            if isa(ω, AbstractDict)
-                val = get(ω, key, nothing)
-            end
-            if val === nothing
-                # Fallback to vector-like indexing for backward compatibility
-                if isa(ω, AbstractVector) && length(ω) >= k
-                    val = ω[k]
-                else
-                    error("No realization available for uncertainty $(key)")
-                end
-            end
-            # val = ω == sp
-            JuMP.fix(uncertainty[k].var, val)
+            # println((s,k, 1.0*(s==k), Symbol(JuMP.name(uncertainty[k].var))))
+            Scenario[s][Symbol(JuMP.name(uncertainty[k].var))] = 1.0*(s==k)
         end
     end
 
@@ -237,5 +248,7 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     cstr = [@constraint(subproblem,sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
         # Stage-objective
     @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
+
+    return Scenario, P
 
 end

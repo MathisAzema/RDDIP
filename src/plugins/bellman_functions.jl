@@ -119,7 +119,7 @@ function _update_lagrangian_model(
     end
     _dynamic_range_warning(θᵏ, πᵏ)
     cut = Cut(θᵏ, πᵏ, obj_y, belief_y, 1, nothing)
-    for cstr in node.lagrangian.cuts
+    for cstr in node.lagrangian_lower.cuts
         value_new_cut = cut.intercept + sum(cut.coefficients[i] * x for (i, x) in cstr.outgoing_state_values)
         if value_new_cut > cstr.cost_to_go_value
             new_cost_to_go = value_new_cut
@@ -363,6 +363,14 @@ function initialize_bellman_function(
     x′ = Dict(key => var.out for (key, var) in node.states)
     obj_μ = node.objective_state !== nothing ? node.objective_state.μ : nothing
     belief_μ = node.belief_state !== nothing ? node.belief_state.μ : nothing
+
+    primal_obj = JuMP.objective_function(node.subproblem)
+    JuMP.set_objective_function(
+        node.subproblem,
+        @expression(node.subproblem, primal_obj + Θᴳ),
+    )
+
+
     return BellmanFunction(
         cut_type,
         ConvexApproximation(Θᴳ, x′, obj_μ, belief_μ, deletion_minimum),

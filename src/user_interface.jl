@@ -652,7 +652,9 @@ mutable struct Node{T}
     index::T
     # The JuMP subproblem.
     subproblem::JuMP.Model
-    lagrangian::LagrangianProblem
+    uppersubproblem::JuMP.Model
+    lagrangian_lower::LagrangianProblem
+    lagrangian_upper::LagrangianProblem
     # A vector of the child nodes.
     children::Vector{Noise{T}}
     # A vector of the discrete stagewise-independent noise terms.
@@ -662,13 +664,16 @@ mutable struct Node{T}
     parameterize::Function  # TODO(odow): make this a concrete type?
     # A list of the state variables in the model.
     states::Dict{Symbol,State{JuMP.VariableRef}}
+    states_upper::Dict{Symbol,State{JuMP.VariableRef}}
     # A list of uncertain variables (random parameters) in the model.
     uncertainties::Dict{Symbol,Uncertain{JuMP.VariableRef}}
+    uncertainties_upper::Dict{Symbol,Uncertain{JuMP.VariableRef}}
     # Stage objective
     stage_objective::Any  # TODO(odow): make this a concrete type?
     stage_objective_set::Bool
     # Bellman function
     bellman_function::Any  # TODO(odow): make this a concrete type?
+    upper_bellman_function::Any  # TODO(odow): make this a concrete type?
     # For dynamic interpolation of objective states.
     objective_state::Union{Nothing,ObjectiveState}
     # For dynamic interpolation of belief states.
@@ -788,11 +793,13 @@ function construct_subproblem(optimizer_factory, direct_mode::Bool)
     if direct_mode
         model = JuMP.direct_model(MOI.instantiate(optimizer_factory))
         set_silent(model)
+        upper_model = JuMP.direct_model(MOI.instantiate(optimizer_factory))
+        set_silent(upper_model)
         lagrange_model = JuMP.direct_model(MOI.instantiate(optimizer_factory))
         set_silent(lagrange_model)
-        return lagrange_model, model
+        return lagrange_model, model, upper_model
     end
-    return JuMP.Model(), JuMP.Model()
+    return JuMP.Model(), JuMP.Model(), JuMP.Model()
 end
 
 # Work around different JuMP modes (Automatic / Manual / Direct).
@@ -904,11 +911,11 @@ function MarkovianPolicyGraph(
 end
 
 function _initialize_lagrangian_problem(node::Node)
-    lagrangian = node.lagrangian
+    lagrangian_lower = node.lagrangian_lower
     mod = node.subproblem
-    for (name, uncertainty) in node.uncertainties
-        JuMP.unfix(uncertainty.var)
-    end
+    # for (name, uncertainty) in node.uncertainties
+    #     JuMP.unfix(uncertainty.var)
+    # end
     undo_relax = JuMP.relax_integrality(mod)
     new_model, _ = @suppress copy_model(mod)
     undo_relax()
@@ -943,12 +950,58 @@ function _initialize_lagrangian_problem(node::Node)
     # if node.index == 24
     #     println(md)
     # end
-    lagrangian.dual_variables_state_out = Dict(name => md[Symbol("dual_var_fix_out[$name]")] for name in keys(copy_state_out))
-    lagrangian.dual_variables_state_in = Dict(name => md[Symbol("dual_var_fix_in[$name]")] for name in keys(copy_state_in))
-    lagrangian.dual_variables_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
-    lagrangian.upper_constraint = cstr
-    lagrangian.model = md
-    lagrangian.theta = theta
+    lagrangian_lower.dual_variables_state_out = Dict(name => md[Symbol("dual_var_fix_out[$name]")] for name in keys(copy_state_out))
+    lagrangian_lower.dual_variables_state_in = Dict(name => md[Symbol("dual_var_fix_in[$name]")] for name in keys(copy_state_in))
+    lagrangian_lower.dual_variables_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
+    lagrangian_lower.upper_constraint = cstr
+    lagrangian_lower.model = md
+    lagrangian_lower.theta = theta
+
+    lagrangian_upper = node.lagrangian_upper
+    mod = node.subproblem
+    # for (name, uncertainty) in node.uncertainties
+    #     JuMP.unfix(uncertainty.var)
+    # end
+    undo_relax = JuMP.relax_integrality(mod)
+    new_model, _ = @suppress copy_model(mod)
+    undo_relax()
+    # if node.index == 24
+    #     println(new_model)
+    # end
+    copy_state_out = Dict()
+    copy_state_in = Dict()
+    copy_uncertainty = Dict()
+    for (name, _) in node.states
+        copy_state_out[name] = JuMP.variable_by_name(new_model, string(name,"_out"))
+        copy_state_in[name] = JuMP.variable_by_name(new_model, string(name,"_in"))
+    end
+    for (name, _) in node.uncertainties
+        copy_uncertainty[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+    @constraint(new_model, fix_out[name in keys(copy_state_out)], copy_state_out[name] == 0.0)
+    @constraint(new_model, fix_in[name in keys(copy_state_in)], copy_state_in[name] == 0.0)
+    @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+    md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+    hexpr = JuMP.objective_function(md)
+    node_index = node.index
+    theta_upper = @variable(
+        md,
+        base_name = "theta_$(node_index)",
+    )
+    cstr = @constraint(md, theta_upper <= hexpr)
+    JuMP.set_objective_function(
+        md,
+            @expression(md, theta_upper),
+    )
+    # if node.index == 24
+    #     println(md)
+    # end
+    lagrangian_upper.dual_variables_state_out = Dict(name => md[Symbol("dual_var_fix_out[$name]")] for name in keys(copy_state_out))
+    lagrangian_upper.dual_variables_state_in = Dict(name => md[Symbol("dual_var_fix_in[$name]")] for name in keys(copy_state_in))
+    lagrangian_upper.dual_variables_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
+    lagrangian_upper.upper_constraint = cstr
+    lagrangian_upper.model = md
+    lagrangian_upper.theta = theta_upper
     return
 end
 
@@ -1013,8 +1066,10 @@ function PolicyGraph(
     lower_bound = -Inf,
     upper_bound = Inf,
     optimizer = nothing,
+    lipschitz_constant :: Float64 = Inf,
     # These arguments are deprecated
     bellman_function = nothing,
+    upper_bellman_function = nothing,
     direct_mode::Bool = false,
 ) where {T}
     # Spend a one-off cost validating the graph.
@@ -1041,36 +1096,69 @@ function PolicyGraph(
             )
         end
     end
+    if upper_bellman_function === nothing
+        if sense == :Min && upper_bound === Inf
+            error(
+                "You must specify a finite upper bound on the objective value" *
+                " using the `lower_bound = value` keyword argument.",
+            )
+        elseif sense == :Max
+            error(
+                "Not ready for maximization.",
+            )
+        else
+            if lipschitz_constant == Inf
+                error(
+                    "With inner approximations, you must specify an estimate for " *
+                    "the Lipschitz constant to be used in the InnerBellmanFunction",
+                )
+            end
+            upper_bellman_function = UpperBellmanFunction(
+                lipschitz_constant;
+                lower_bound = lower_bound,
+                upper_bound = upper_bound,
+            )
+        end
+    end
     # Initialize nodes.
     for (node_index, children) in graph.nodes
         if node_index == graph.root_node
             continue
         end
-        lagrangian, subproblem = construct_subproblem(optimizer, direct_mode)
+        lagrangian_lower, subproblem, uppersubproblem = construct_subproblem(optimizer, direct_mode)
         theta = @variable(
-            lagrangian,
+            lagrangian_lower,
             base_name = "theta_$(node_index)",
         )
-        # JuMP.set_objective_function(
-        # lagrangian,
-        #     @expression(lagrangian, theta),
-        # )
-        # set_optimizer_attribute(lagrangian, "DualReductions", 0)
-        lagrangian_problem = LagrangianProblem(lagrangian, theta, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), nothing, Cut2[])
+        lagrangian_problem_lower = LagrangianProblem(lagrangian_lower, theta, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), nothing, Cut2[])
+
+        lagrangian_upper = JuMP.Model(optimizer)
+        theta_upper = @variable(
+            lagrangian_upper,
+            base_name = "theta_$(node_index)",
+        )
+        lagrangian_problem_upper = LagrangianProblem(lagrangian_upper, theta_upper, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), nothing, Cut2[])
+
+
         node = Node(
             node_index,
             subproblem,
-            lagrangian_problem,
+            uppersubproblem,
+            lagrangian_problem_lower,
+            lagrangian_problem_upper,
             Noise{T}[],
             Noise[],
             (ω) -> nothing,
             Dict{Symbol,State{JuMP.VariableRef}}(),
+            Dict{Symbol,State{JuMP.VariableRef}}(),
+            Dict{Symbol,Uncertain{JuMP.VariableRef}}(),
             Dict{Symbol,Uncertain{JuMP.VariableRef}}(),
             0.0,
             false,
             # Delay initializing the bellman function until later so that it can
             # use information about the children and number of
             # stagewise-independent noise realizations.
+            nothing,
             nothing,
             # Likewise for the objective states.
             nothing,
@@ -1089,7 +1177,23 @@ function PolicyGraph(
         subproblem.ext[:RDDIP_policy_graph] = policy_graph
         policy_graph.nodes[node_index] = subproblem.ext[:RDDIP_node] = node
         JuMP.set_objective_sense(subproblem, policy_graph.objective_sense)
-        builder(instance, force, subproblem, node_index)
+        Scenario, P = builder(instance, force, subproblem, node_index)
+        set_optimizer(subproblem, optimizer)
+        set_silent(subproblem)
+        set_objective(node)
+
+        node.noise_terms = [Noise(scenario, P[i]) for (i, scenario) in enumerate(Scenario)]
+
+        uppersubproblem, _ = @suppress copy_model(subproblem)
+        node.uppersubproblem = uppersubproblem
+        for (name,state) in node.states
+            node.states_upper[name] = State(JuMP.variable_by_name(uppersubproblem, string(name,"_in")), JuMP.variable_by_name(uppersubproblem, string(name,"_out")))
+        end
+        for (name,state) in node.uncertainties
+            node.uncertainties_upper[name] = Uncertain(JuMP.variable_by_name(uppersubproblem, string(name)))
+        end
+        set_optimizer(uppersubproblem, optimizer)
+        set_silent(uppersubproblem)
         # Add a dummy noise here so that all nodes have at least one noise term.
         if length(node.noise_terms) == 0
             push!(node.noise_terms, Noise(nothing, 1.0))
@@ -1111,6 +1215,9 @@ function PolicyGraph(
         # Intialize the bellman function. (See note in creation of Node above.)
         node.bellman_function =
             initialize_bellman_function(bellman_function, policy_graph, node)
+        
+        node.upper_bellman_function =
+            initialize_upper_bellman_function(upper_bellman_function, policy_graph, node, optimizer)
     end
     # Add root nodes
     for (child, probability) in graph.nodes[graph.root_node]
@@ -1156,6 +1263,10 @@ function PolicyGraph(
             # end
         end
         _initialize_lagrangian_problem(node)
+        set_optimizer(node.lagrangian_lower.model, optimizer)
+        set_silent(node.lagrangian_lower.model)
+        set_optimizer(node.lagrangian_upper.model, optimizer)
+        set_silent(node.lagrangian_upper.model)
     end
     return policy_graph
 end
@@ -1185,7 +1296,7 @@ function _get_incoming_domain(model::PolicyGraph{T}) where {T}
     )
     for (k, node) in model.nodes
         for noise in node.noise_terms
-            parameterize(node, noise.term)
+            parameterizeb(node, noise.term)
             for (state_name, state) in node.states
                 domain = outgoing_bounds[(k, state_name)]
                 l_new, u_new, is_int_new = _bounds(state.out)

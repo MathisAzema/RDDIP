@@ -73,6 +73,7 @@ include("UC/builder.jl")
 include("plugins/risk_measures.jl")
 include("plugins/sampling_schemes.jl")
 include("plugins/bellman_functions.jl")
+include("plugins/upper_bellman_functions.jl")
 include("plugins/stopping_rules.jl")
 include("plugins/local_improvement_search.jl")
 include("plugins/duality_handlers.jl")
@@ -87,13 +88,10 @@ include("visualization/dashboard.jl")
 include("visualization/value_functions.jl")
 
 # Other solvers.
-include("deterministic_equivalent.jl")
-include("biobjective.jl")
 include("alternative_forward.jl")
 
-# Inner approximation
-include("Inner.jl")
+# # Inner approximation
+# include("Inner.jl")
 
-include("Experimental.jl")
 include("MSPFormat.jl")
 end
