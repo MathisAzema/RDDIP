@@ -133,7 +133,7 @@ function print_iteration_header(io)
     println(io, _RULE)
     println(
         io,
-        " iteration    simulation      bound        time (s)     solves  pid",
+        " iteration    lower bound      upper bound        time (s)     solves  pid",
     )
     println(io, _RULE)
     return
@@ -147,8 +147,8 @@ function print_iteration(io, log::Log)
     print(io, log.serious_numerical_issue ? "†" : " ")
     print(io, print_value(log.iteration))
     print(io, log.duality_key)
-    print(io, " ", print_value(log.simulation_value))
-    print(io, " ", print_value(log.bound))
+    print(io, " ", print_value(log.lower_bound))
+    print(io, " ", print_value(log.upper_bound))
     print(io, " ", print_value(log.time))
     print(io, " ", print_value(log.total_solves))
     print(io, " ", print_value3(log.pid))

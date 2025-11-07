@@ -264,10 +264,22 @@ function compute_upper_bellman_value(
     return JuMP.objective_value(md)
 end
 
+function compute_lower_bellman_value(
+    bellman_function::BellmanFunction,
+    state::Dict{Symbol,Float64},
+)
+    V = bellman_function.global_theta
+    value = maximum([cut.intercept + sum(cut.coefficients[i] * state[i] for (i, x) in V.states) for cut in V.cuts]; init = 0.0)
+
+    # Retrieve the optimal value
+    return value
+end
+
 function get_worst_case_scenario_by_enumeration(    
     model::PolicyGraph{T},
     node::Node{T},
-    state::Dict{Symbol,Float64};
+    state::Dict{Symbol,Float64},
+    duality_handler::Union{Nothing,AbstractDualityHandler};
     refine_upper_bound::Bool = true, #true = backward
 ) where {T}
     objectives = [0.0 for noise in node.noise_terms]
@@ -277,32 +289,13 @@ function get_worst_case_scenario_by_enumeration(
                 model,
                 node,
                 state,
-                noise.term
+                noise.term,
+                duality_handler = duality_handler
             )
             objectives[i] = subproblem_results.objective
         end
     end
     imax = argmax(objectives)
-    # if node.index <= 8
-    #     # println(("worst_case", node.index, imax, objectives[imax]))
-    # end
-    # if node.index == 7 && objectives[imax] <=1.09e6
-    #     println(("*** suspicious upper bound ***", node.index, imax, objectives))
-    #     for (k, v) in state
-    #         if v >1e-4
-    #             println(k, " ", v)
-    #         end
-    #     end
-    #     println("outgoing")
-    #     for (k, v) in node.states_upper
-    #         if JuMP.value(v.out) >1e-4
-    #             println(k, " ", JuMP.value(v.out))
-    #         end
-    #     end
-    #     unset_silent(node.uppersubproblem)
-    #     JuMP.optimize!(node.uppersubproblem)
-    #     set_silent(node.uppersubproblem)
-    # end
     if node.index > 1 && refine_upper_bound
         previous_node = model.nodes[node.index-1]
         refine_bellman_function_upper(
@@ -312,9 +305,6 @@ function get_worst_case_scenario_by_enumeration(
             state,
             objectives[imax],
         )
-    end
-    if node.index == 1
-        println("Upper bound : ", objectives[imax], " ", JuMP.value(node.upper_bellman_function.global_theta.theta))
     end
 
     return (objective = objectives[imax], noise = node.noise_terms[imax].term)

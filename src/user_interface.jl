@@ -712,10 +712,20 @@ function post_optimize_hook(f::Function, node::Node)
     return
 end
 
+# struct Log
+#     iteration::Int
+#     bound::Float64
+#     simulation_value::Float64
+#     time::Float64
+#     pid::Int
+#     total_solves::Int
+#     duality_key::String
+#     serious_numerical_issue::Bool
+# end
 struct Log
     iteration::Int
-    bound::Float64
-    simulation_value::Float64
+    lower_bound::Float64
+    upper_bound::Float64
     time::Float64
     pid::Int
     total_solves::Int

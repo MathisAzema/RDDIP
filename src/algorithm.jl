@@ -537,6 +537,7 @@ function solve_subproblem(
     state::Dict{Symbol,Float64},
     noise;
     duality_handler::Union{Nothing,AbstractDualityHandler},
+    forward_pass::Bool = false, #false = backward pass
 ) where {T}
     # if node.index == 24
     #     println(duality_handler ===  nothing)
@@ -548,7 +549,7 @@ function solve_subproblem(
     # set the objective.
     set_incoming_state(node, state)
     parameterizeb(node, noise)
-    if duality_handler ===  nothing #|| true #Forward_pass
+    if forward_pass #|| true #Forward_pass
         JuMP.optimize!(node.subproblem)
         lock(model.lock) do
             model.ext[:total_solves] = get(model.ext, :total_solves, 0) + 1
@@ -568,26 +569,38 @@ function solve_subproblem(
         stage_objective = stage_objective_value(node, node.stage_objective)
         cost_to_go_value = value(node.bellman_function.global_theta.theta)
         intercept = JuMP.objective_value(node.subproblem)
-        # println((intercept, cost_to_go_value, stage_objective))
-        _refine_lagrangian_model(
-            node,
-            intercept,
-            cost_to_go_value,
-            state,
-            noise,
-            outgoing_state,
-            0,
-        )
-        @_timeit_threadsafe model.timer_output "get_dual_solution" begin
-            objective, dual_values = get_dual_solution(node, duality_handler)
+        # println((intercept, cost_to_go_value, stage_objective)
+        if duality_handler.name === "LagrangianConicDuality"
+            _refine_lagrangian_model(
+                node,
+                intercept,
+                cost_to_go_value,
+                state,
+                noise,
+                outgoing_state,
+                0,
+            )
+            cost_to_go_value_upper = compute_upper_bellman_value(
+                node.upper_bellman_function,
+                outgoing_state,
+            )
+            intercept_upper = stage_objective + cost_to_go_value_upper
+            _refine_lagrangian_model(
+                node,
+                intercept_upper,
+                cost_to_go_value_upper,
+                state,
+                noise,
+                outgoing_state,
+                1,
+            )
         end
         state = outgoing_state
-
-        # println(Jump.objective_function(node.subproblem))
+        objective = JuMP.objective_value(node.subproblem)
 
         return (
             state = state,
-            duals = dual_values, #inutile
+            duals = Dict{Symbol,Float64}(), #inutile
             objective = objective,
             stage_objective = stage_objective,
         )
@@ -610,7 +623,8 @@ function solve_subproblem_upper(
     model::PolicyGraph{T},
     node::Node{T},
     state::Dict{Symbol,Float64},
-    noise,
+    noise;
+    duality_handler::Union{Nothing,AbstractDualityHandler},
 ) where {T}
 
     set_incoming_state_upper(node, state)
@@ -632,17 +646,37 @@ function solve_subproblem_upper(
             outgoing_state[name] = JuMP.value(state.out)
         end
     end
-    cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
-    intercept = JuMP.objective_value(node.uppersubproblem)
-    _refine_lagrangian_model(
-        node,
-        intercept,
-        cost_to_go_value,
-        state,
-        noise,
-        outgoing_state,
-        1,
-    )
+
+    if duality_handler.name === "LagrangianConicDuality"
+        cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
+        intercept = JuMP.objective_value(node.uppersubproblem)
+        _refine_lagrangian_model(
+            node,
+            intercept,
+            cost_to_go_value,
+            state,
+            noise,
+            outgoing_state,
+            1,
+        )
+        cost_to_go_value_lower = compute_lower_bellman_value(
+            node.bellman_function,
+            outgoing_state,
+        )
+        intercept_lower = intercept - cost_to_go_value + cost_to_go_value_lower
+        _refine_lagrangian_model(
+            node,
+            intercept_lower,
+            cost_to_go_value_lower,
+            state,
+            noise,
+            outgoing_state,
+            0,
+        )
+    end
+
+
+
     objective = JuMP.objective_value(node.uppersubproblem)
 
     return (
@@ -846,6 +880,7 @@ function solve_all_children(
                             outgoing_state,
                             noise.term;
                             duality_handler = duality_handler,
+                            forward_pass = false
                         )
                     end
                     push!(items.duals, subproblem_results.duals)
@@ -900,6 +935,7 @@ function solve_all_children_robust(
                 model,
                 child_node,
                 outgoing_state,
+                duality_handler;
                 refine_upper_bound = true,
             )
             noise = worstcase.noise
@@ -910,6 +946,7 @@ function solve_all_children_robust(
                     outgoing_state,
                     noise;
                     duality_handler = duality_handler,
+                    forward_pass = false
                 )
             end
             # println(subproblem_results.objective)
@@ -942,81 +979,82 @@ Calculate the lower bound (if minimizing, otherwise upper bound) of the problem
 model at the point state, assuming the risk measure at the root node is
 risk_measure.
 """
-function calculate_bound(
-    model::PolicyGraph{T},
-    root_state::Dict{Symbol,Float64} = model.initial_root_state;
-    risk_measure::AbstractRiskMeasure = Expectation(),
-) where {T}
-    # Initialization.
-    noise_supports = Any[]
-    probabilities = Float64[]
-    objectives = Float64[]
-    current_belief = initialize_belief(model)
-    # Solve all problems that are children of the root node.
-    for child in model.root_children
-        # It's okay to skip nodes with zero probability.
-        #
-        # See RDDIP.jl#796 and RDDIP.jl#797 for more discussion.
-        if isapprox(child.probability, 0.0; atol = 1e-6)
-            continue
-        end
-        node = model[child.term]
-        lock(node.lock)
-        try
-            for noise in node.noise_terms
-                if node.objective_state !== nothing
-                    update_objective_state(
-                        node.objective_state,
-                        node.objective_state.initial_value,
-                        noise.term,
-                    )
-                end
-                # Update belief state, etc.
-                if node.belief_state !== nothing
-                    belief = node.belief_state::BeliefState{T}
-                    partition_index = belief.partition_index
-                    belief.updater(
-                        belief.belief,
-                        current_belief,
-                        partition_index,
-                        noise.term,
-                    )
-                end
-                subproblem_results = solve_subproblem(
-                    model,
-                    node,
-                    root_state,
-                    noise.term;
-                    duality_handler = nothing,
-                )
-                push!(objectives, subproblem_results.objective)
-                push!(probabilities, child.probability * noise.probability)
-                push!(noise_supports, noise.term)
-            end
-        finally
-            unlock(node.lock)
-        end
-    end
-    # Now compute the risk-adjusted probability measure:
-    risk_adjusted_probability = similar(probabilities)
-    offset = adjust_probability(
-        risk_measure,
-        risk_adjusted_probability,
-        probabilities,
-        noise_supports,
-        objectives,
-        model.objective_sense == MOI.MIN_SENSE,
-    )
-    # Finally, calculate the risk-adjusted value.
-    return sum(
-        obj * prob for (obj, prob) in zip(objectives, risk_adjusted_probability)
-    ) + offset
-end
+# function calculate_bound(
+#     model::PolicyGraph{T},
+#     root_state::Dict{Symbol,Float64} = model.initial_root_state;
+#     risk_measure::AbstractRiskMeasure = Expectation(),
+# ) where {T}
+#     # Initialization.
+#     noise_supports = Any[]
+#     probabilities = Float64[]
+#     objectives = Float64[]
+#     current_belief = initialize_belief(model)
+#     # Solve all problems that are children of the root node.
+#     for child in model.root_children
+#         # It's okay to skip nodes with zero probability.
+#         #
+#         # See RDDIP.jl#796 and RDDIP.jl#797 for more discussion.
+#         if isapprox(child.probability, 0.0; atol = 1e-6)
+#             continue
+#         end
+#         node = model[child.term]
+#         lock(node.lock)
+#         try
+#             for noise in node.noise_terms
+#                 if node.objective_state !== nothing
+#                     update_objective_state(
+#                         node.objective_state,
+#                         node.objective_state.initial_value,
+#                         noise.term,
+#                     )
+#                 end
+#                 # Update belief state, etc.
+#                 if node.belief_state !== nothing
+#                     belief = node.belief_state::BeliefState{T}
+#                     partition_index = belief.partition_index
+#                     belief.updater(
+#                         belief.belief,
+#                         current_belief,
+#                         partition_index,
+#                         noise.term,
+#                     )
+#                 end
+#                 subproblem_results = solve_subproblem(
+#                     model,
+#                     node,
+#                     root_state,
+#                     noise.term;
+#                     duality_handler = nothing,
+#                     forward_pass = true,
+#                 )
+#                 push!(objectives, subproblem_results.objective)
+#                 push!(probabilities, child.probability * noise.probability)
+#                 push!(noise_supports, noise.term)
+#             end
+#         finally
+#             unlock(node.lock)
+#         end
+#     end
+#     # Now compute the risk-adjusted probability measure:
+#     risk_adjusted_probability = similar(probabilities)
+#     offset = adjust_probability(
+#         risk_measure,
+#         risk_adjusted_probability,
+#         probabilities,
+#         noise_supports,
+#         objectives,
+#         model.objective_sense == MOI.MIN_SENSE,
+#     )
+#     # Finally, calculate the risk-adjusted value.
+#     return sum(
+#         obj * prob for (obj, prob) in zip(objectives, risk_adjusted_probability)
+#     ) + offset
+# end
 
 struct IterationResult{T}
     pid::Int
-    bound::Float64
-    cumulative_value::Float64
+    lower_bound::Float64
+    upper_bound::Float64
     has_converged::Bool
     status::Symbol
     cuts::Dict{T,Vector{Any}}
@@ -1039,20 +1077,23 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
         )
     end
     # println("backward pass complete.")
-    @_timeit_threadsafe model.timer_output "calculate_bound" begin
-        bound = calculate_bound(
-            model;
-            risk_measure = options.root_node_risk_measure,
-        )
-    end
+    # @_timeit_threadsafe model.timer_output "calculate_bound" begin
+    #     bound = calculate_bound(
+    #         model;
+    #         risk_measure = options.root_node_risk_measure,
+    #     )
+    # end
+
+    lower_bound = forward_trajectory.lower_bound
+    upper_bound = forward_trajectory.upper_bound
     lock(options.lock)
     try
         push!(
             options.log,
             Log(
                 length(options.log) + 1,
-                bound,
-                forward_trajectory.cumulative_value,
+                lower_bound,
+                upper_bound,
                 time() - options.start_time,
                 max(Threads.threadid(), Distributed.myid()),
                 lock(() -> model.ext[:total_solves], model.lock),
@@ -1064,8 +1105,8 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
             convergence_test(model, options.log, options.stopping_rules)
         return IterationResult(
             max(Threads.threadid(), Distributed.myid()),
-            bound,
-            forward_trajectory.cumulative_value,
+            lower_bound,
+            upper_bound,
             has_converged,
             status,
             cuts,
@@ -1396,113 +1437,113 @@ end
 
 # Internal function: helper to conduct a single simulation. Users should use the
 # documented, user-facing function RDDIP.simulate instead.
-function _simulate(
-    model::PolicyGraph{T},
-    variables::Vector{Symbol};
-    sampling_scheme::AbstractSamplingScheme,
-    custom_recorders::Dict{Symbol,Function},
-    duality_handler::Union{Nothing,AbstractDualityHandler},
-    skip_undefined_variables::Bool,
-    incoming_state::Dict{Symbol,Float64},
-) where {T}
-    # Sample a scenario path.
-    scenario_path, _ = sample_scenario(model, sampling_scheme)
+# function _simulate(
+#     model::PolicyGraph{T},
+#     variables::Vector{Symbol};
+#     sampling_scheme::AbstractSamplingScheme,
+#     custom_recorders::Dict{Symbol,Function},
+#     duality_handler::Union{Nothing,AbstractDualityHandler},
+#     skip_undefined_variables::Bool,
+#     incoming_state::Dict{Symbol,Float64},
+# ) where {T}
+#     # Sample a scenario path.
+#     scenario_path, _ = sample_scenario(model, sampling_scheme)
 
-    # Storage for the simulation results.
-    simulation = Dict{Symbol,Any}[]
-    current_belief = initialize_belief(model)
-    # A cumulator for the stage-objectives.
-    cumulative_value = 0.0
+#     # Storage for the simulation results.
+#     simulation = Dict{Symbol,Any}[]
+#     current_belief = initialize_belief(model)
+#     # A cumulator for the stage-objectives.
+#     cumulative_value = 0.0
 
-    # Objective state interpolation.
-    objective_state_vector, N =
-        initialize_objective_state(model[scenario_path[1][1]])
-    objective_states = NTuple{N,Float64}[]
-    for (depth, (node_index, noise)) in enumerate(scenario_path)
-        node = model[node_index]
-        lock(node.lock)
-        try
-            # Objective state interpolation.
-            objective_state_vector = update_objective_state(
-                node.objective_state,
-                objective_state_vector,
-                noise,
-            )
-            if objective_state_vector !== nothing
-                push!(objective_states, objective_state_vector)
-            end
-            if node.belief_state !== nothing
-                belief = node.belief_state::BeliefState{T}
-                partition_index = belief.partition_index
-                current_belief = belief.updater(
-                    belief.belief,
-                    current_belief,
-                    partition_index,
-                    noise,
-                )
-            else
-                current_belief = Dict(node_index => 1.0)
-            end
-            # Solve the subproblem.
-            subproblem_results = solve_subproblem(
-                model,
-                node,
-                incoming_state,
-                noise;
-                duality_handler = duality_handler,
-            )
-            # Add the stage-objective
-            cumulative_value += subproblem_results.stage_objective
-            # Record useful variables from the solve.
-            store = Dict{Symbol,Any}(
-                :node_index => node_index,
-                :noise_term => noise,
-                :stage_objective => subproblem_results.stage_objective,
-                :bellman_term =>
-                    subproblem_results.objective -
-                    subproblem_results.stage_objective,
-                :objective_state => objective_state_vector,
-                :belief => copy(current_belief),
-            )
-            if objective_state_vector !== nothing && N == 1
-                store[:objective_state] = store[:objective_state][1]
-            end
-            # Loop through the primal variable values that the user wants.
-            for variable in variables
-                if haskey(node.subproblem.obj_dict, variable)
-                    # Note: we broadcast the call to value for variables which are
-                    # containers (like Array, Containers.DenseAxisArray, etc). If
-                    # the variable is a scalar (e.g. just a plain VariableRef), the
-                    # broadcast preseves the scalar shape.
-                    # TODO: what if the variable container is a dictionary? They
-                    # should be using Containers.SparseAxisArray, but this might not
-                    # always be the case...
-                    store[variable] = JuMP.value.(node.subproblem[variable])
-                elseif skip_undefined_variables
-                    store[variable] = NaN
-                else
-                    error(
-                        "No variable named $(variable) exists in the subproblem.",
-                        " If you want to simulate the value of a variable, make ",
-                        "sure it is defined in _all_ subproblems, or pass ",
-                        "`skip_undefined_variables=true` to `simulate`.",
-                    )
-                end
-            end
-            # Loop through any custom recorders that the user provided.
-            for (sym, recorder) in custom_recorders
-                store[sym] = recorder(node.subproblem)
-            end
-            # Add the store to our list.
-            push!(simulation, store)
-            # Set outgoing state as the incoming state for the next node.
-            incoming_state = copy(subproblem_results.state)
-        finally
-            unlock(node.lock)
-        end
-    end
-    return simulation
-end
+#     # Objective state interpolation.
+#     objective_state_vector, N =
+#         initialize_objective_state(model[scenario_path[1][1]])
+#     objective_states = NTuple{N,Float64}[]
+#     for (depth, (node_index, noise)) in enumerate(scenario_path)
+#         node = model[node_index]
+#         lock(node.lock)
+#         try
+#             # Objective state interpolation.
+#             objective_state_vector = update_objective_state(
+#                 node.objective_state,
+#                 objective_state_vector,
+#                 noise,
+#             )
+#             if objective_state_vector !== nothing
+#                 push!(objective_states, objective_state_vector)
+#             end
+#             if node.belief_state !== nothing
+#                 belief = node.belief_state::BeliefState{T}
+#                 partition_index = belief.partition_index
+#                 current_belief = belief.updater(
+#                     belief.belief,
+#                     current_belief,
+#                     partition_index,
+#                     noise,
+#                 )
+#             else
+#                 current_belief = Dict(node_index => 1.0)
+#             end
+#             # Solve the subproblem.
+#             subproblem_results = solve_subproblem(
+#                 model,
+#                 node,
+#                 incoming_state,
+#                 noise;
+#                 duality_handler = duality_handler,
+#             )
+#             # Add the stage-objective
+#             cumulative_value += subproblem_results.stage_objective
+#             # Record useful variables from the solve.
+#             store = Dict{Symbol,Any}(
+#                 :node_index => node_index,
+#                 :noise_term => noise,
+#                 :stage_objective => subproblem_results.stage_objective,
+#                 :bellman_term =>
+#                     subproblem_results.objective -
+#                     subproblem_results.stage_objective,
+#                 :objective_state => objective_state_vector,
+#                 :belief => copy(current_belief),
+#             )
+#             if objective_state_vector !== nothing && N == 1
+#                 store[:objective_state] = store[:objective_state][1]
+#             end
+#             # Loop through the primal variable values that the user wants.
+#             for variable in variables
+#                 if haskey(node.subproblem.obj_dict, variable)
+#                     # Note: we broadcast the call to value for variables which are
+#                     # containers (like Array, Containers.DenseAxisArray, etc). If
+#                     # the variable is a scalar (e.g. just a plain VariableRef), the
+#                     # broadcast preseves the scalar shape.
+#                     # TODO: what if the variable container is a dictionary? They
+#                     # should be using Containers.SparseAxisArray, but this might not
+#                     # always be the case...
+#                     store[variable] = JuMP.value.(node.subproblem[variable])
+#                 elseif skip_undefined_variables
+#                     store[variable] = NaN
+#                 else
+#                     error(
+#                         "No variable named $(variable) exists in the subproblem.",
+#                         " If you want to simulate the value of a variable, make ",
+#                         "sure it is defined in _all_ subproblems, or pass ",
+#                         "`skip_undefined_variables=true` to `simulate`.",
+#                     )
+#                 end
+#             end
+#             # Loop through any custom recorders that the user provided.
+#             for (sym, recorder) in custom_recorders
+#                 store[sym] = recorder(node.subproblem)
+#             end
+#             # Add the store to our list.
+#             push!(simulation, store)
+#             # Set outgoing state as the incoming state for the next node.
+#             incoming_state = copy(subproblem_results.state)
+#         finally
+#             unlock(node.lock)
+#         end
+#     end
+#     return simulation
+# end
 
 function _initial_state(model::PolicyGraph)
     return Dict(String(k) => v for (k, v) in model.initial_root_state)
@@ -1665,24 +1706,24 @@ If the node is deterministic, omit the `noise` argument.
 Pass a list of symbols to `controls_to_record` to save the optimal primal
 solution corresponding to the names registered in the model.
 """
-function evaluate(
-    rule::DecisionRule{T};
-    incoming_state::Dict{Symbol,Float64},
-    noise = nothing,
-    controls_to_record = Symbol[],
-) where {T}
-    ret = solve_subproblem(
-        rule.model,
-        rule.node,
-        incoming_state,
-        noise;
-        duality_handler = nothing,
-    )
-    return (
-        stage_objective = ret.stage_objective,
-        outgoing_state = ret.state,
-        controls = Dict(
-            c => value.(rule.node.subproblem[c]) for c in controls_to_record
-        ),
-    )
-end
+# function evaluate(
+#     rule::DecisionRule{T};
+#     incoming_state::Dict{Symbol,Float64},
+#     noise = nothing,
+#     controls_to_record = Symbol[],
+# ) where {T}
+#     ret = solve_subproblem(
+#         rule.model,
+#         rule.node,
+#         incoming_state,
+#         noise;
+#         duality_handler = nothing,
+#     )
+#     return (
+#         stage_objective = ret.stage_objective,
+#         outgoing_state = ret.state,
+#         controls = Dict(
+#             c => value.(rule.node.subproblem[c]) for c in controls_to_record
+#         ),
+#     )
+# end

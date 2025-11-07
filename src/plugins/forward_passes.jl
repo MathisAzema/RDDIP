@@ -42,6 +42,8 @@ function forward_pass(
     cumulative_bound = 0.0 
     scenario_path = Tuple{T,Any}[]
     cum = []
+    upper_bound = 0.0
+    lower_bound = 0.0
     if options.sampling_scheme == RobustMonteCarlo()
         # Iterate down the scenario.
         node_index = model.root_node +1
@@ -53,8 +55,12 @@ function forward_pass(
                     model,
                     node,
                     incoming_state_value,
+                    options.duality_handler;
                     refine_upper_bound = false,
                 )
+                if node.index == 1
+                    upper_bound = worstcase.objective
+                end
                 noise = worstcase.noise
                 push!(scenario_path, (node_index, noise))
                 # Solve the subproblem, note that `duality_handler = nothing`.
@@ -64,7 +70,8 @@ function forward_pass(
                         node,
                         incoming_state_value,
                         noise;
-                        duality_handler = nothing,
+                        duality_handler = options.duality_handler,
+                        forward_pass = true
                     )
                 end
                 # Cumulate the stage_objective.
@@ -88,7 +95,7 @@ function forward_pass(
                 push!(cum, bound - JuMP.value(node.bellman_function.global_theta.theta))
                 push!(sampled_states, incoming_state_value)
                 if node_index == 1
-                    println("Lower bound: ", objective_bound(node.subproblem))
+                    lower_bound = objective_bound(node.subproblem)
                 end
                 # println(node.index, " ", objective_value(node.subproblem))
             finally
@@ -139,12 +146,14 @@ function forward_pass(
         end
     end
     # println(cum)
-    println([sum(cum[end-k:end]) for k in 0:23])
+    # println([sum(cum[end-k:end]) for k in 0:23])
     # ===== End: drop off starting state if terminated due to cycle =====
     return (
         scenario_path = scenario_path,
         sampled_states = sampled_states,
         cumulative_value = cumulative_value,
+        upper_bound = upper_bound,
+        lower_bound = lower_bound,
     )
 end
 

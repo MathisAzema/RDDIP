@@ -187,8 +187,8 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
 
         # Random variables
     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
-    M = 1
-    Ω = [[(-1.0+(s-1)*0.5) for b in BusWind] for s in 1:M]
+    M = 2
+    Ω = [[(-1.0+(s-1)*2.0) for b in BusWind] for s in 1:M]
     P = [1/M for s in 1:M]
     # Ω = [[0.0 for b in BusWind]]
     # P = [1.0]

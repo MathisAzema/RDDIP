@@ -366,16 +366,6 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, time
     @constraint(model,  [unit in thermal_units, t in 1:T], power_real[unit.name,t]==power_dev[unit.name,t]+sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
     @constraint(model,  [unit in thermal_units, t in 0:T], sum(power_integer[unit.name,t,k] for k in 1:K)==is_on[unit.name,t])
 
-    # @constraint(model,  [unit in thermal_units, t in 1:T], is_on[unit.name,t] == 1)
-    # @constraint(model, power_integer[1,6,3]==1)
-
-    # @constraint(model, power_integer[1,6,3]==1)
-    # @constraint(model, power_integer[2,6,3]==1)
-    # @constraint(model, power_integer[3,6,3]==1)
-    # @constraint(model, power_integer[4,6,1]==1)
-    # @constraint(model, power_integer[5,6,1]==1)
-
-    # @constraint(model, power_integer[2,7,3]==1)
 
     @variable(model, thermal_fuel_cost[t in 1:T]>=0)
     @variable(model, thermal_fixed_cost[t in 1:T]>=0)
