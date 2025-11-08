@@ -51,17 +51,25 @@ function forward_pass(
             node = model.nodes[node_index]
             lock(node.lock)
             try
-                worstcase = get_worst_case_scenario_by_enumeration(
+                # worstcase = get_worst_case_scenario_by_enumeration(
+                #     model,
+                #     node,
+                #     incoming_state_value,
+                #     options.duality_handler;
+                #     refine_upper_bound = false,
+                # )
+                worstcase = get_worst_case_scenario_by_lagrangian(
                     model,
                     node,
                     incoming_state_value,
-                    options.duality_handler;
+                    incoming_state_value;
                     refine_upper_bound = false,
                 )
                 if node.index == 1
                     upper_bound = worstcase.objective
                 end
                 noise = worstcase.noise
+                # println(noise)
                 push!(scenario_path, (node_index, noise))
                 # Solve the subproblem, note that `duality_handler = nothing`.
                 @_timeit_threadsafe model.timer_output "solve_subproblem" begin

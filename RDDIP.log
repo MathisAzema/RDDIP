@@ -30541,3 +30541,4277 @@ numerical stability report
         73S  1.906165e+06  1.933919e+06  1.139567e+02      8541   1
         76S  1.907572e+06  1.933919e+06  1.196815e+02      8892   1
         92S  1.912326e+06  1.933919e+06  1.511423e+02     10764   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1L  7.283671e+04  1.125479e+07  3.280163e+00       117   1
+         2L  1.751232e+06  1.947421e+06  5.005882e+00       234   1
+         3L  1.765846e+06  1.947421e+06  7.523306e+00       351   1
+         4L  1.769372e+06  1.947421e+06  8.985997e+00       468   1
+         7L  1.815740e+06  1.947421e+06  1.744015e+01       819   1
+        10L  1.823037e+06  1.947421e+06  2.344940e+01      1170   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [31, 90]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 52]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 4e+04]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 2e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1L  1.824874e+06  1.947421e+06  1.363649e+00      1287   1
+         2L  1.845879e+06  1.947421e+06  2.707147e+00      1404   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.314154e+00       117   1
+         3S  1.523770e+06  1.947421e+06  3.244301e+00       351   1
+         5S  1.735887e+06  1.947421e+06  5.389512e+00       585   1
+         7S  1.760401e+06  1.947421e+06  7.617690e+00       819   1
+         8S  1.783320e+06  1.947421e+06  9.002341e+00       936   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 13]
+  VariableRef in MOI.LessThan{Float64}    : [1, 8]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.977708e+00       482   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 13]
+  VariableRef in MOI.LessThan{Float64}    : [1, 8]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  8.176836e+06  8.183943e+06  1.600329e+00       599   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 13]
+  VariableRef in MOI.LessThan{Float64}    : [1, 8]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 13]
+  VariableRef in MOI.LessThan{Float64}    : [1, 8]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.092866e+00       263   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  8.176836e+06  8.183943e+06  1.114981e+00       380   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  8.176836e+06  8.183943e+06  1.066340e+00       497   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  3.043251e-01       117   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.998151e+00       117   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.453006e+00       117   1
+         2S  1.810973e+05  1.947421e+06  3.096309e+00       234   1
+         3S  1.228243e+06  1.947421e+06  4.610974e+00       351   1
+         4S  1.681312e+06  1.947421e+06  6.387605e+00       468   1
+         5S  1.714989e+06  1.947421e+06  8.267389e+00       585   1
+         8S  1.768732e+06  1.947421e+06  1.478711e+01       936   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.449416e+00       117   1
+         2S  1.810973e+05  1.947421e+06  2.910034e+00       234   1
+         3S  1.228243e+06  1.947421e+06  4.443544e+00       351   1
+         4S  1.681312e+06  1.947421e+06  6.155048e+00       468   1
+         5S  1.714989e+06  1.947421e+06  8.210781e+00       585   1
+         8S  1.768732e+06  1.947421e+06  1.443508e+01       936   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  4.471470e+00       117   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [31, 81]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 52]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 1e+06]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  1.810973e+05  1.947421e+06  8.976891e-01       234   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  7.301700e-01       117   1
+         3S  1.228243e+06  1.947421e+06  2.269855e+00       351   1
+         5S  1.714989e+06  1.947421e+06  4.203491e+00       585   1
+         7S  1.767524e+06  1.947421e+06  6.479040e+00       819   1
+         8S  1.768732e+06  1.947421e+06  7.507713e+00       936   1
+        10S  1.803291e+06  1.947421e+06  9.405797e+00      1170   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.295755e+00       117   1
+         3S  1.540892e+06  1.947421e+06  2.795588e+00       351   1
+         5S  1.716119e+06  1.947421e+06  4.578460e+00       585   1
+         7S  1.765556e+06  1.947421e+06  6.585323e+00       819   1
+         9S  1.804387e+06  1.947421e+06  8.439375e+00      1053   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.125479e+07  1.268146e+00       117   1
+         3S  1.540892e+06  1.947421e+06  3.150027e+00       351   1
+         5S  1.716119e+06  1.947421e+06  5.175689e+00       585   1
+         7S  1.765556e+06  1.947421e+06  7.326580e+00       819   1
+         9S  1.804387e+06  1.947421e+06  9.316212e+00      1053   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 167]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [32, 89]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 52]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 72]
+numerical stability report
+  matrix range     [1e+00, 4e+04]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 2e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [2, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  8.512561e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.043321e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  4.392140e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.794978e+06  4.650496e+06  1.239190e-01        48   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 7]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.794978e+06  2.873524e+06  1.258810e-01        96   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.409919e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 8.38861e+06
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 23]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 2]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 9]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.748330e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.491101e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.456210e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 7e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.784295e+06  1.112609e+06  1.566911e-01       144   1
+         8S  7.784295e+06  1.112609e+06  1.227032e+00       312   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 7e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.784295e+06  1.112609e+06  6.551051e-01       384   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 7e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.784295e+06  1.112609e+06  3.161540e-01       408   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 7e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.784295e+06  1.112609e+06  3.228300e-01       432   1
+         5S  7.784295e+06  1.112609e+06  1.507479e+00       528   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  3.162241e-01        24   1
+         5S  7.777427e+06  1.988638e+06  1.476368e+00       120   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.244532e+00        24   1
+         5S  7.777427e+06  1.988638e+06  2.486246e+00       120   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 7e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 8e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.784295e+06  1.112609e+06  1.704469e+00       144   1
+         4S  7.784295e+06  1.112609e+06  2.730642e+00       216   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  9.446080e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.713707e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.605737e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.085531e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  3.747148e+06  2.486448e-01        72   1
+         5S  7.784295e+06  1.112609e+06  1.259147e+00       168   1
+         9S  7.784295e+06  1.112609e+06  2.314924e+00       264   1
+        13S  7.784295e+06  1.112609e+06  3.346781e+00       360   1
+        17S  7.784295e+06  1.112609e+06  4.382382e+00       456   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.784121e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  4.626603e+06  1.107229e+00        48   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  3.747148e+06  1.061768e+00        72   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 4e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777427e+06  2.867694e+06  1.241458e+00        96   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 4e+05]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777427e+06  1.988638e+06  1.245158e+00       120   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.257852e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  4.626603e+06  5.688970e-01        48   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  3.747148e+06  3.055100e-01        72   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.838578e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.105992e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  5.958450e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  5.842659e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.171551e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.018031e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.248850e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  9.787538e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  5.444882e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  4.767420e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  4.540811e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.037120e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.432070e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  5.943508e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.054090e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.786239e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  8.363571e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [4, 9]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.739841e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  2.759941e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.236169e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.546471e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.964810e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.622369e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.499419e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.040740e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.238098e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.473811e-01        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  1.766219e-01        24   1
+         9S  7.777188e+06  7.784039e+06  1.288658e+00       216   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  7.379391e-01        24   1
+         8S  7.777188e+06  7.784039e+06  1.814880e+00       192   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  7.784039e+06  1.537309e-01       264   1
+         8S  7.777188e+06  7.784039e+06  1.239476e+00       432   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  6.363699e-01        24   1
+         9S  7.777188e+06  7.784295e+06  1.785527e+00       216   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [5, 10]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [6, 6]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 6]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 6e+04]
+  objective range  [1e+00, 1e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 7e+06]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.777188e+06  7.784295e+06  1.450078e-01       264   1
+         8S  7.777188e+06  7.784295e+06  1.165703e+00       432   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 5
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [22, 22]
+  AffExpr in MOI.EqualTo{Float64}         : [9, 9]
+  AffExpr in MOI.GreaterThan{Float64}     : [3, 8]
+  AffExpr in MOI.LessThan{Float64}        : [7, 12]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [6, 11]
+  VariableRef in MOI.LessThan{Float64}    : [1, 6]
+  VariableRef in MOI.ZeroOne              : [8, 8]
+numerical stability report
+  matrix range     [1e+00, 1e+02]
+  objective range  [1e+00, 1e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  2.792433e+05  8.727985e+06  5.809319e-01        24   1
+         7S  7.784295e+06  7.784295e+06  1.595636e+00       168   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.383077e+07  8.230829e-01        24   1
+         3S  1.580214e+06  1.383077e+07  2.742767e+00        72   1
+         5S  1.627933e+06  1.383077e+07  5.135614e+00       120   1
+         6S  1.671844e+06  1.383077e+07  6.351839e+00       144   1
+         7S  1.681615e+06  1.383077e+07  7.545055e+00       168   1
+         8S  1.694643e+06  1.383077e+07  8.846339e+00       192   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [31, 90]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 51]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [9e-10, 4e+04]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 2e+06]
+WARNING: numerical stability issues detected
+  - matrix range contains small coefficients
+Very large or small absolute values of coefficients
+can cause numerical stability issues. Consider
+reformulating the model.
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  1.719203e+06  1.383077e+07  1.228720e+00       264   1
+         2S  1.731865e+06  1.383077e+07  2.507630e+00       288   1
+         3S  1.743463e+06  1.383077e+07  4.077767e+00       312   1
+         4S  1.750213e+06  1.383077e+07  5.183150e+00       336   1
+         5S  1.770087e+06  1.383077e+07  6.306249e+00       360   1
+         6S  1.770861e+06  1.383077e+07  7.596566e+00       384   1
+         7S  1.772992e+06  1.383077e+07  8.928508e+00       408   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.383077e+07  1.336467e+00        24   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : false
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [30, 80]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [1, 1]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 83]
+  VariableRef in MOI.LessThan{Float64}    : [1, 51]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [1e+00, 3e+02]
+  objective range  [1e+00, 3e+03]
+  bounds range     [1e+00, 8e+06]
+  rhs range        [1e+00, 1e+03]
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  7.283671e+04  1.383077e+07  8.292830e-01        24   1
+         3S  1.580214e+06  1.383077e+07  2.989157e+00        72   1
+         4S  1.603979e+06  1.383077e+07  3.990350e+00        96   1
+         5S  1.627933e+06  1.383077e+07  5.048988e+00       120   1
+         6S  1.671844e+06  1.383077e+07  6.238200e+00       144   1
+         7S  1.681615e+06  1.383077e+07  7.438163e+00       168   1
+         8S  1.694643e+06  1.383077e+07  8.691658e+00       192   1
+         9S  1.697399e+06  1.383077e+07  9.890466e+00       216   1
+        13S  1.743463e+06  1.383077e+07  1.498401e+01       312   1
+        18S  1.773316e+06  1.383077e+07  2.092239e+01       432   1
+        23S  1.781367e+06  1.144919e+07  2.719939e+01       552   1
+        27S  1.786270e+06  1.144919e+07  3.241250e+01       648   1
+        31S  1.791682e+06  1.144919e+07  3.756019e+01       744   1
+        35S  1.795072e+06  1.085363e+07  4.282181e+01       840   1
+        39S  1.799045e+06  1.068702e+07  4.848806e+01       936   1
+        43S  1.800071e+06  9.554820e+06  5.437857e+01      1032   1
+        47S  1.801501e+06  9.525613e+06  6.079946e+01      1128   1
+        51S  1.805426e+06  9.525613e+06  6.675366e+01      1224   1
+        55S  1.805800e+06  9.525613e+06  7.295049e+01      1320   1
+        58S  1.806515e+06  9.525613e+06  7.799761e+01      1392   1
+        62S  1.807958e+06  9.525613e+06  8.441313e+01      1488   1
+        66S  1.807984e+06  9.525613e+06  9.045189e+01      1584   1
+        70S  1.808899e+06  9.525613e+06  9.673240e+01      1680   1
+        74S  1.809790e+06  9.525613e+06  1.030430e+02      1776   1
+        78S  1.810853e+06  9.525613e+06  1.093208e+02      1872   1
+        82S  1.810819e+06  9.525613e+06  1.154841e+02      1968   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [33, 137]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 51]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [2e-13, 7e+04]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 2e+06]
+WARNING: numerical stability issues detected
+  - matrix range contains small coefficients
+Very large or small absolute values of coefficients
+can cause numerical stability issues. Consider
+reformulating the model.
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  1.812627e+06  7.060751e+06  1.575659e+00      2424   1
+         2S  1.812638e+06  6.187382e+06  3.322784e+00      2448   1
+         3S  1.812640e+06  6.187382e+06  4.821478e+00      2472   1
+         4S  1.812639e+06  6.187382e+06  6.287944e+00      2496   1
+         5S  1.812639e+06  6.187382e+06  7.762542e+00      2520   1
+         6S  1.812639e+06  6.187382e+06  9.236867e+00      2544   1
+        10S  1.812639e+06  3.574443e+06  1.568441e+01      2640   1
+        14S  1.812639e+06  1.829635e+06  2.201312e+01      2736   1
+        18S  1.812639e+06  1.829635e+06  2.844325e+01      2832   1
+        22S  1.812924e+06  1.829635e+06  3.492024e+01      2928   1
+        26S  1.813086e+06  1.829635e+06  4.126601e+01      3024   1
+        30S  1.813086e+06  1.828673e+06  4.780495e+01      3120   1
+        34S  1.813086e+06  1.828673e+06  5.434381e+01      3216   1
+        37S  1.813086e+06  1.828673e+06  5.943105e+01      3288   1
+        40S  1.813086e+06  1.828673e+06  6.475831e+01      3360   1
+        43S  1.813086e+06  1.828673e+06  7.005107e+01      3432   1
+        46S  1.813086e+06  1.828673e+06  7.526372e+01      3504   1
+        49S  1.813086e+06  1.828673e+06  8.066557e+01      3576   1
+        52S  1.813086e+06  1.828673e+06  8.591141e+01      3648   1
+        55S  1.813086e+06  1.828673e+06  9.145338e+01      3720   1
+        58S  1.813086e+06  1.828673e+06  9.695560e+01      3792   1
+        61S  1.813086e+06  1.828673e+06  1.024941e+02      3864   1
+        64S  1.813086e+06  1.828673e+06  1.079893e+02      3936   1
+        67S  1.813086e+06  1.828673e+06  1.136755e+02      4008   1
+        70S  1.813086e+06  1.828673e+06  1.192835e+02      4080   1
+        86S  1.813106e+06  1.828567e+06  1.504875e+02      4464   1
+-------------------------------------------------------------------
+         RDDIP.jl (c) Oscar Dowson and contributors, 2017-25
+-------------------------------------------------------------------
+problem
+  nodes           : 24
+  state variables : 50
+  scenarios       : 1.00000e+00
+  existing cuts   : true
+options
+  solver          : serial mode
+  risk measure    : RDDIP.Expectation()
+  sampling scheme : RDDIP.RobustMonteCarlo
+subproblem structure
+  VariableRef                             : [166, 166]
+  AffExpr in MOI.EqualTo{Float64}         : [63, 63]
+  AffExpr in MOI.GreaterThan{Float64}     : [35, 142]
+  AffExpr in MOI.LessThan{Float64}        : [70, 120]
+  VariableRef in MOI.EqualTo{Float64}     : [51, 51]
+  VariableRef in MOI.GreaterThan{Float64} : [33, 33]
+  VariableRef in MOI.LessThan{Float64}    : [1, 1]
+  VariableRef in MOI.ZeroOne              : [71, 71]
+numerical stability report
+  matrix range     [2e-13, 1e+05]
+  objective range  [1e+00, 3e+03]
+  bounds range     [8e+06, 8e+06]
+  rhs range        [1e+00, 2e+06]
+WARNING: numerical stability issues detected
+  - matrix range contains small coefficients
+Very large or small absolute values of coefficients
+can cause numerical stability issues. Consider
+reformulating the model.
+-------------------------------------------------------------------
+ iteration    lower bound      upper bound        time (s)     solves  pid
+-------------------------------------------------------------------
+         1S  1.813664e+06  1.828452e+06  2.351943e+00      4824   1
+         2S  1.813664e+06  1.828452e+06  4.276987e+00      4848   1
+         3S  1.813698e+06  1.828452e+06  6.184417e+00      4872   1
+         4S  1.813698e+06  1.828360e+06  8.167133e+00      4896   1
+         7S  1.813591e+06  1.828360e+06  1.403583e+01      4968   1
+        10S  1.813591e+06  1.828245e+06  1.998441e+01      5040   1

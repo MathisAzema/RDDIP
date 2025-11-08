@@ -309,3 +309,131 @@ function get_worst_case_scenario_by_enumeration(
 
     return (objective = objectives[imax], noise = node.noise_terms[imax].term)
 end
+
+
+function get_worst_case_scenario_by_lagrangian(    
+    model::PolicyGraph{T},
+    node::Node{T},
+    state::Dict{Symbol,Float64},
+    outgoing_stage_heur::Dict{Symbol,Float64};
+    refine_upper_bound::Bool = true, #true = backward
+) where {T}
+    md = node.lagrangian_upper.model
+    primal_obj = JuMP.objective_function(md)
+
+    JuMP.set_objective_function(
+        md,
+        @expression(md, primal_obj + sum(
+            node.lagrangian_upper.dual_variables_state_in[name] * state[name] for
+            (name, _) in node.states)),
+    )
+
+    cstr = node.lagrangian_upper.upper_constraint
+    for (name, value) in outgoing_stage_heur
+        var = node.lagrangian_upper.dual_variables_state_out[name]
+        set_normalized_coefficient(cstr, var, -value)
+    end
+
+    V_x = compute_upper_bellman_value(
+        node.upper_bellman_function,
+        outgoing_stage_heur,
+    )
+    set_normalized_rhs(cstr, V_x)
+
+    JuMP.optimize!(md)
+
+    if JuMP.termination_status(md) != MOI.OPTIMAL
+        set_optimizer_attribute(md, "Presolve", 0)
+        JuMP.optimize!(md)
+    end
+    if JuMP.termination_status(md) != MOI.OPTIMAL && JuMP.termination_status(md) != MOI.DUAL_INFEASIBLE
+        println(md)
+        ps = JuMP.primal_status(md)
+        ds = JuMP.dual_status(md)
+        println("Primal status: ", ps)
+        println("Dual status: ", ds)
+        println(objective_value(md))
+        println((node.index, length(node.lagrangian_upper.cuts)))
+        # end
+        return nothing, nothing
+    end
+
+    noise = Dict{Symbol,Float64}()
+    for (name, var) in node.lagrangian_upper.uncertainty
+        noise[name] = JuMP.value(var)
+    end
+    objective = JuMP.objective_value(md)
+
+    num_states = length(node.states_upper)
+    λ = zeros(num_states)
+    h_expr = Vector{AffExpr}(undef, num_states)
+    for (i, (key, state)) in enumerate(node.states_upper)
+        λ[i] = value(node.lagrangian_upper.dual_variables_state_in[key])
+        # JuMP.unfix(state.in) #pas besoin apparemment
+        h_expr[i] = @expression(node.uppersubproblem, state.in)
+    end
+
+    num_uncertainties = length(node.uncertainties_upper)
+    μ = zeros(num_uncertainties)
+    g_expr = Vector{AffExpr}(undef, num_uncertainties)
+    for (i, (key, uncertainty)) in enumerate(node.uncertainties_upper)
+        μ[i] = value(node.lagrangian_upper.dual_variables_uncertainty[key])
+        # JuMP.unfix(uncertainty.var)
+        g_expr[i] = @expression(node.uppersubproblem, uncertainty.var)
+    end
+
+    JuMP.set_objective_function(md, primal_obj)
+
+    lagrangian_obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values = _solve_primal_problem_upper(node, node.uppersubproblem, λ, h_expr, μ, g_expr)
+
+    intercept = lagrangian_obj + sum(λ[i] * incoming_state_values[k] for (i, k) in enumerate(keys(node.states_upper))) +
+        sum(μ[i] * incoming_uncertainty_values[k] for (i, k) in enumerate(keys(node.uncertainties_upper)))
+    
+    _refine_lagrangian_model(
+        node,
+        intercept,
+        cost_to_go_value,
+        incoming_state_values,
+        incoming_uncertainty_values,
+        outgoing_state_values,
+        1,
+    )
+
+    cost_to_go_value_lower = compute_lower_bellman_value(
+        node.bellman_function,
+        outgoing_state_values,
+    )
+    if cost_to_go_value_lower >= cost_to_go_value + 1e-5 
+        println("Lower bound value is greater than upper bound value!")
+    end
+    intercept_lower = intercept - cost_to_go_value + cost_to_go_value_lower
+    _refine_lagrangian_model(
+        node,
+        intercept_lower,
+        cost_to_go_value_lower,
+        incoming_state_values,
+        incoming_uncertainty_values,
+        outgoing_state_values,
+        0,
+    )
+
+    # println(incoming_state_values)
+
+
+    if node.index > 1 && refine_upper_bound
+        previous_node = model.nodes[node.index-1]
+        refine_bellman_function_upper(
+            model,
+            previous_node,
+            previous_node.upper_bellman_function,
+            state,
+            objective,
+        )
+    end
+
+    if node.index == 1 
+        println(objective)
+    end
+
+    return (objective = objective, noise = noise)
+end

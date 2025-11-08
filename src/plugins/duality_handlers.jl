@@ -382,20 +382,35 @@ function _solve_primal_problem_upper(
     )
 
     JuMP.optimize!(model)
+    # if JuMP.termination_status(model) != MOI.OPTIMAL
+    #     println(JuMP.termination_status(model))
+    #     println(model)
+    #     JuMP.set_objective_function(model, primal_obj)
+    #     return nothing
+    # end
+
     if JuMP.termination_status(model) != MOI.OPTIMAL
-        JuMP.set_objective_function(model, primal_obj)
+        println(model)
+        set_optimizer_attribute(model, "Presolve", 0)
+        unset_silent(model)
+        JuMP.optimize!(model)
+
+        for v in all_variables(model)
+            println("Variable ", JuMP.name(v), ": ", JuMP.value(v))
+        end
+
         return nothing
     end
-    L_λ = JuMP.objective_bound(model)
-    cost_to_go_value = value(node.bellman_function.global_theta.theta)
+    L_λ = JuMP.objective_value(model)
+    cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
     incoming_state_values = Dict{Symbol,Float64}()
     incoming_uncertainty_values = Dict{Symbol,Float64}()
     outgoing_state_values = Dict{Symbol,Float64}()
-    for (key, state) in node.states
+    for (key, state) in node.states_upper
         incoming_state_values[key] = value(state.in)
         outgoing_state_values[key] = value(state.out)
     end
-    for (key, uncertainty) in node.uncertainties
+    for (key, uncertainty) in node.uncertainties_upper
         incoming_uncertainty_values[key] = value(uncertainty.var)
     end
     JuMP.set_objective_function(model, primal_obj)
@@ -408,16 +423,37 @@ function _solve_lagrangian_problem(
     ξ::Vector{Float64},
     outgoing_state_values::Dict{Symbol,Float64},
 )
-    # println("HHH ", node.index)
     model = node.lagrangian_lower.model
+    # JuMP.set_objective_function(
+    #     model,
+    #     node.lagrangian_lower.theta + sum(
+    #         node.lagrangian_lower.dual_variables_state_in[k] * x[i] for
+    #         (i, (k, state)) in enumerate(node.states)) + sum(
+    #         node.lagrangian_lower.dual_variables_uncertainty[k] * ξ[i] for
+    #         (i, (k, uncertainty)) in enumerate(node.uncertainties)),
+    # )
+
+    primal_obj = JuMP.objective_function(model)
+    
     JuMP.set_objective_function(
         model,
-        node.lagrangian_lower.theta + sum(
+        @expression(model, primal_obj + sum(
             node.lagrangian_lower.dual_variables_state_in[k] * x[i] for
-            (i, (k, state)) in enumerate(node.states)) + sum(
-            node.lagrangian_lower.dual_variables_uncertainty[k] * ξ[i] for
-            (i, (k, uncertainty)) in enumerate(node.uncertainties)),
+            (i, (k, state)) in enumerate(node.states))),
     )
+
+    # JuMP.set_objective_function(
+    #     model,
+    #     node.lagrangian_lower.theta + sum(
+    #         node.lagrangian_lower.dual_variables_state_in[k] * x[i] for
+    #         (i, (k, state)) in enumerate(node.states)),
+    # )
+    for (i, (name, _)) in enumerate(node.uncertainties)
+        JuMP.fix(node.lagrangian_lower.uncertainty[name], ξ[i]; force = true)
+    end
+
+    undo_relax = JuMP.relax_integrality(model)
+
     cstr = node.lagrangian_lower.upper_constraint
     for (name, value) in outgoing_state_values
         var = node.lagrangian_lower.dual_variables_state_out[name]
@@ -425,43 +461,14 @@ function _solve_lagrangian_problem(
     end
     V_x = maximum([cut.intercept + sum(coeff * outgoing_state_values[name] for (name, coeff) in cut.coefficients) for cut in node.bellman_function.global_theta.cuts]; init=0.0)
     set_normalized_rhs(cstr, V_x)
-    # for (i, (k, state)) in enumerate(node.states)
-    #     println((k, x[i], outgoing_state_values[k]))
-    # end
 
-    # println(cstr)
-    # println("3")
     JuMP.optimize!(model)
-    # println(JuMP.termination_status(model))
 
     if JuMP.termination_status(model) != MOI.OPTIMAL
         set_optimizer_attribute(model, "Presolve", 0)
-        # println((node.index, length(node.lagrangian.cuts)))
-        # unset_silent(model)
-        # println(model)
-        # md = dualize(model)
-        # println(md)
         JuMP.optimize!(model)
-        # if node.index == 2
-        #     println("Lagrangian problem failed to solve ", JuMP.termination_status(model))
-        #     ps = JuMP.primal_status(model)
-        #     ds = JuMP.dual_status(model)
-        #     println("Primal status: ", ps)
-        #     println("Dual status: ", ds)
-        # end
-        # for var in all_variables(model)
-        #     if abs(value(var))>1e-8
-        #         println((string(var), value(var)))
-        #     end
-        # end
-        # for cstr in all_constraints(model; include_variable_in_set_constraints=true)
-        #     println(cstr)
-        #     println(value(cstr))
-        # end
     end
     if JuMP.termination_status(model) != MOI.OPTIMAL && JuMP.termination_status(model) != MOI.DUAL_INFEASIBLE
-        println(JuMP.termination_status(model))
-        println(JuMP.termination_status(model) == MOI.DUAL_INFEASIBLE)
         ps = JuMP.primal_status(model)
         ds = JuMP.dual_status(model)
         println("Primal status: ", ps)
@@ -471,6 +478,7 @@ function _solve_lagrangian_problem(
         # end
         return nothing, nothing
     end
+
     λ = Dict{Symbol,Float64}()
     for (key, state) in node.states
         λ[key] = value(node.lagrangian_lower.dual_variables_state_in[key])
@@ -482,7 +490,18 @@ function _solve_lagrangian_problem(
     if JuMP.termination_status(model) == MOI.DUAL_INFEASIBLE
         return Inf , λ, μ
     end
-    return JuMP.objective_value(model), λ, μ
+
+    objective = JuMP.objective_value(model)
+
+    undo_relax()
+
+    for (i, (name, _)) in enumerate(node.uncertainties)
+        JuMP.unfix(node.lagrangian_lower.uncertainty[name])
+    end
+
+    JuMP.set_objective_function(model, primal_obj)
+
+    return objective, λ, μ
 end
 
 duality_log_key(::LagrangianDuality) = "L"
@@ -610,7 +629,11 @@ function _refine_lagrangian_model(
     outgoing_state_values::Dict{Symbol,Float64},
     type::Int, # 0 = lower bound, 1 = upper bound
 ) where T
+    # println(type)
+    # println("incoming_state_values: ", incoming_state_values)
+    # println(sum(node.lagrangian_lower.dual_variables_state_in[k] * incoming_state_values[k] for (k, state) in node.states))
     if type == 0
+        # println("Adding cut to lower Lagrangian model")
         cstr = @constraint(node.lagrangian_lower.model,
             node.lagrangian_lower.theta <= intercept - sum(
                 node.lagrangian_lower.dual_variables_state_in[k] * incoming_state_values[k] for
@@ -620,8 +643,9 @@ function _refine_lagrangian_model(
         )
         push!(node.lagrangian_lower.cuts, Cut2(intercept, cost_to_go_value, cstr, outgoing_state_values))
     elseif type == 1
+        # println("Adding cut to upper Lagrangian model")
         cstr = @constraint(node.lagrangian_upper.model,
-            node.lagrangian_upper.theta >= intercept - sum(
+            node.lagrangian_upper.theta <= intercept - sum(
                 node.lagrangian_upper.dual_variables_state_in[k] * incoming_state_values[k] for
                 (k, state) in node.states) - sum(
                 node.lagrangian_upper.dual_variables_uncertainty[k] * incoming_uncertainty_values[k] for
@@ -678,21 +702,32 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         0,
     )
 
+    cost_to_go_value_upper = compute_upper_bellman_value(
+        node.upper_bellman_function,
+        outgoing_state_values,
+    )
+    intercept_upper = intercept - cost_to_go_value + cost_to_go_value_upper
+    _refine_lagrangian_model(
+        node,
+        intercept_upper,
+        cost_to_go_value_upper,
+        incoming_state_values,
+        incoming_uncertainty_values,
+        outgoing_state_values,
+        1,
+    )
+
     value_lagrange, λ_L, μ_L = _solve_lagrangian_problem(
         node,
         x,
         ξ,
-        outgoing_lagrangian_heur
+        outgoing_lagrangian_heur,
         # outgoing_state_values, #Incoming or outgoing ? Incoming ensure feasibility, outgoing seems better but we have to return something if unbounded.
     )
 
     λ_k2 = zeros(num_states)
     for (i, (key, state)) in enumerate(node.states)
         λ_k2[i] = λ_L[key]
-
-        # if x[i] > 1e-4
-        #     println((key, x[i], λ_k[i], λ_k2[i]))
-        # end
     end
     # μ_k2 = zeros(num_uncertainties)
     # for (i, (key, uncertainty)) in enumerate(node.uncertainties)
@@ -719,6 +754,21 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         0,
     )
 
+    cost_to_go_value_upper2 = compute_upper_bellman_value(
+        node.upper_bellman_function,
+        outgoing_state_values2,
+    )
+    intercept_upper2 = intercept2 - cost_to_go_value2 + cost_to_go_value_upper2
+    _refine_lagrangian_model(
+        node,
+        intercept_upper2,
+        cost_to_go_value_upper2,
+        incoming_state_values2,
+        incoming_uncertainty_values2,
+        outgoing_state_values2,
+        1,
+    )
+
     for (i, (_, state)) in enumerate(node.states)
         JuMP.fix(state.in, x[i]; force = true)
     end
@@ -729,7 +779,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         #     println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
         # end
         if lagrangian_obj2 > lagrangian_obj
-            # println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
+            println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
             return lagrangian_obj2, λ_L
         end
         # println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)

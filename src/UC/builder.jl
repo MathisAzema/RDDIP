@@ -106,6 +106,8 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     BusWind=instance.BusWind
     NumWindfarms=length(BusWind)
 
+    constraints_uncertainty = JuMP.ConstraintRef[]
+
     
     @variable(subproblem, is_on[i = 1:N], Bin, RDDIP.State, initial_value = thermal_units[i].InitUpDownTime>0) #initial value fictive
     @variable(subproblem, start_up[i = 1:N], Bin)
@@ -187,7 +189,7 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
 
         # Random variables
     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
-    M = 2
+    M = 1
     Ω = [[(-1.0+(s-1)*2.0) for b in BusWind] for s in 1:M]
     P = [1/M for s in 1:M]
     # Ω = [[0.0 for b in BusWind]]
@@ -197,7 +199,10 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
         P = [1.0]
     end
     @variable(subproblem, uncertainty[s in 1:length(P)], Bin, RDDIP.Uncertain)
-    @constraint(subproblem, sum(uncertainty[s].var for s in 1:length(P)) == 1)
+    cstr_uncertainty1 = [@constraint(subproblem, sum(uncertainty[s].var for s in 1:length(P)) == 1)]
+    for c in cstr_uncertainty1
+        push!(constraints_uncertainty, c)
+    end
     @constraint(subproblem, [k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
     Ωs = [[1*(k==s) for k in 1:length(P)] for s in 1:length(P)]
     # RDDIP.parameterize(subproblem, Ωs, P) do ω
@@ -249,6 +254,6 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
         # Stage-objective
     @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
 
-    return Scenario, P
+    return Scenario, P, constraints_uncertainty
 
 end

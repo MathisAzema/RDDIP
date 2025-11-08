@@ -584,7 +584,15 @@ function solve_subproblem(
                 node.upper_bellman_function,
                 outgoing_state,
             )
+            if cost_to_go_value_upper <= cost_to_go_value - 1e-5
+                @warn(
+                    "Upper bound $cost_to_go_value_upper bellman value is lower than lower bound $cost_to_go_value " *
+                    "bellman value at node $(node.index). This may indicate " *
+                    "numerical issues.",
+                )
+            end
             intercept_upper = stage_objective + cost_to_go_value_upper
+
             _refine_lagrangian_model(
                 node,
                 intercept_upper,
@@ -594,6 +602,7 @@ function solve_subproblem(
                 outgoing_state,
                 1,
             )
+
         end
         state = outgoing_state
         objective = JuMP.objective_value(node.subproblem)
@@ -931,11 +940,18 @@ function solve_all_children_robust(
                     options,
                 )
             end
-            worstcase = get_worst_case_scenario_by_enumeration(
+            # worstcase = get_worst_case_scenario_by_enumeration(
+            #     model,
+            #     child_node,
+            #     outgoing_state,
+            #     duality_handler;
+            #     refine_upper_bound = true,
+            # )
+            worstcase = get_worst_case_scenario_by_lagrangian(
                 model,
                 child_node,
                 outgoing_state,
-                duality_handler;
+                outgoing_state;
                 refine_upper_bound = true,
             )
             noise = worstcase.noise
