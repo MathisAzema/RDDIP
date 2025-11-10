@@ -117,6 +117,7 @@ struct Options{T}
     # For threading
     lock::ReentrantLock
     root_node_risk_measure::AbstractRiskMeasure
+    worstcasestartegy::WorstcaseStrategy
     # Internal function: users should never construct this themselves.
     function Options(
         model::PolicyGraph{T},
@@ -138,6 +139,7 @@ struct Options{T}
         forward_pass_callback = x -> nothing,
         post_iteration_callback = result -> nothing,
         root_node_risk_measure::AbstractRiskMeasure = Expectation(),
+        worstcasestartegy::WorstcaseStrategy = RDDIP.Lagrangian,
     ) where {T}
         return new{T}(
             initial_state,
@@ -163,6 +165,7 @@ struct Options{T}
             Ref{Int}(0),  # last_log_iteration
             ReentrantLock(),
             root_node_risk_measure,
+            worstcasestartegy,
         )
     end
 end
@@ -179,6 +182,13 @@ end
 function set_incoming_state_upper(node::Node, state::Dict{Symbol,Float64})
     for (state_name, value) in state
         JuMP.fix(node.states_upper[state_name].in, value; force=true)
+    end
+    return
+end
+
+function unset_incoming_state_upper(node::Node, state::Dict{Symbol,Float64})
+    for (state_name, value) in state
+        JuMP.unfix(node.states_upper[state_name].in)
     end
     return
 end
@@ -337,6 +347,13 @@ end
 function parameterize_upper(node::Node, noise)
     for (name, var) in node.uncertainties_upper
         JuMP.fix(var, noise[name])
+    end
+    return
+end
+
+function unparameterize_upper(node::Node)
+    for (name, uncertain) in node.uncertainties_upper
+        JuMP.unfix(uncertain.var)
     end
     return
 end
@@ -539,10 +556,6 @@ function solve_subproblem(
     duality_handler::Union{Nothing,AbstractDualityHandler},
     forward_pass::Bool = false, #false = backward pass
 ) where {T}
-    # if node.index == 24
-    #     println(duality_handler ===  nothing)
-    # end
-    # println(node.index)
     _initialize_solver(node; throw_error = false)
     # Parameterize the model. First, fix the value of the incoming state
     # variables. Then parameterize the model depending on `noise`. Finally,
@@ -656,37 +669,40 @@ function solve_subproblem_upper(
         end
     end
 
-    if duality_handler.name === "LagrangianConicDuality"
-        cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
-        intercept = JuMP.objective_value(node.uppersubproblem)
-        _refine_lagrangian_model(
-            node,
-            intercept,
-            cost_to_go_value,
-            state,
-            noise,
-            outgoing_state,
-            1,
-        )
-        cost_to_go_value_lower = compute_lower_bellman_value(
-            node.bellman_function,
-            outgoing_state,
-        )
-        intercept_lower = intercept - cost_to_go_value + cost_to_go_value_lower
-        _refine_lagrangian_model(
-            node,
-            intercept_lower,
-            cost_to_go_value_lower,
-            state,
-            noise,
-            outgoing_state,
-            0,
-        )
-    end
+    # if duality_handler.name === "LagrangianConicDuality"
+    #     cost_to_go_value = value(node.upper_bellman_function.global_theta.theta)
+    #     intercept = JuMP.objective_value(node.uppersubproblem)
+    #     _refine_lagrangian_model(
+    #         node,
+    #         intercept,
+    #         cost_to_go_value,
+    #         state,
+    #         noise,
+    #         outgoing_state,
+    #         1,
+    #     )
+    #     cost_to_go_value_lower = compute_lower_bellman_value(
+    #         node.bellman_function,
+    #         outgoing_state,
+    #     )
+    #     intercept_lower = intercept - cost_to_go_value + cost_to_go_value_lower
+    #     _refine_lagrangian_model(
+    #         node,
+    #         intercept_lower,
+    #         cost_to_go_value_lower,
+    #         state,
+    #         noise,
+    #         outgoing_state,
+    #         0,
+    #     )
+    # end
 
 
 
     objective = JuMP.objective_value(node.uppersubproblem)
+
+    unparameterize_upper(node)
+    unset_incoming_state_upper(node, state)
 
     return (
         objective = objective,
@@ -940,20 +956,24 @@ function solve_all_children_robust(
                     options,
                 )
             end
-            # worstcase = get_worst_case_scenario_by_enumeration(
-            #     model,
-            #     child_node,
-            #     outgoing_state,
-            #     duality_handler;
-            #     refine_upper_bound = true,
-            # )
-            worstcase = get_worst_case_scenario_by_lagrangian(
-                model,
-                child_node,
-                outgoing_state,
-                outgoing_state;
-                refine_upper_bound = true,
-            )
+            if options.worstcasestartegy == RDDIP.Enumeration
+                worstcase = get_worst_case_scenario_by_enumeration(
+                    model,
+                    child_node,
+                    outgoing_state,
+                    duality_handler;
+                    refine_upper_bound = true,
+                )
+            elseif options.worstcasestartegy == RDDIP.Lagrangian
+                worstcase = get_worst_case_scenario_by_lagrangian(
+                    model,
+                    child_node,
+                    outgoing_state,
+                    outgoing_state,
+                    duality_handler;
+                    refine_upper_bound = true,
+                )
+            end
             noise = worstcase.noise
             @_timeit_threadsafe model.timer_output "solve_subproblem" begin
                 subproblem_results = solve_subproblem(
@@ -1261,6 +1281,7 @@ function train(
     duality_handler::AbstractDualityHandler = ContinuousConicDuality(),
     forward_pass_callback::Function = (x) -> nothing,
     post_iteration_callback = result -> nothing,
+    worstcase_strategy::WorstcaseStrategy = RDDIP.Lagrangian
 )
     if any(node -> node.objective_state !== nothing, values(model.nodes))
         # FIXME(odow): Threaded is broken for objective states
@@ -1406,6 +1427,7 @@ function train(
         forward_pass_callback,
         post_iteration_callback,
         root_node_risk_measure,
+        worstcasestartegy = worstcase_strategy,
     )
     status = :not_solved
     try

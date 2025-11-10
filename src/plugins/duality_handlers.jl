@@ -350,7 +350,8 @@ function _solve_primal_problem_lower(
         JuMP.set_objective_function(model, primal_obj)
         return nothing
     end
-    L_λ = JuMP.objective_bound(model) 
+    obj_bound = JuMP.objective_bound(model) 
+    obj = JuMP.objective_value(model) 
     cost_to_go_value = value(node.bellman_function.global_theta.theta)
     incoming_state_values = Dict{Symbol,Float64}()
     incoming_uncertainty_values = Dict{Symbol,Float64}()
@@ -363,7 +364,7 @@ function _solve_primal_problem_lower(
         incoming_uncertainty_values[key] = value(uncertainty.var)
     end
     JuMP.set_objective_function(model, primal_obj)
-    return L_λ, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values
+    return obj_bound, obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values
 end
 
 function _solve_primal_problem_upper(
@@ -595,6 +596,7 @@ function get_dual_solution(node::Node, handler::StrengthenedConicDuality)
     end
     lagrangian_obj = _solve_primal_problem(node.subproblem, λ_k, h_expr, h_k)
     # println((node.index, lagrangian_obj))
+    
     for (i, (_, state)) in enumerate(node.states)
         JuMP.fix(state.in, x[i]; force = true)
     end
@@ -677,7 +679,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         λ_k[i] = conic_state_dual[key]
     end
 
-    lagrangian_obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values = _solve_primal_problem_lower(node, node.subproblem, λ_k, h_expr)
+    lagrangian_obj_bound, lagrangian_obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values = _solve_primal_problem_lower(node, node.subproblem, λ_k, h_expr)
 
     num_uncertainties = length(node.uncertainties)
     ξ = zeros(num_uncertainties)
@@ -738,7 +740,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
     #     JuMP.fix(uncertainty.var, ξ[i]; force = true)
     # end
     # lagrangian_obj2, cost_to_go_value2, incoming_state_values2, incoming_uncertainty_values2, outgoing_state_values2 = _solve_primal_problem_b(node, node.subproblem, λ_k2, h_expr, μ_k2, g_expr)
-    lagrangian_obj2, cost_to_go_value2, incoming_state_values2, incoming_uncertainty_values2, outgoing_state_values2 = _solve_primal_problem_lower(node, node.subproblem, λ_k2, h_expr)
+    lagrangian_obj_bound2, lagrangian_obj2, cost_to_go_value2, incoming_state_values2, incoming_uncertainty_values2, outgoing_state_values2 = _solve_primal_problem_lower(node, node.subproblem, λ_k2, h_expr)
 
     # intercept2 = lagrangian_obj2 - sum(λ_k2[i] * (x[i] - incoming_state_values2[k]) for (i, k) in enumerate(keys(node.states))) - sum(μ_k2[i] * (ξ[i] - incoming_uncertainty_values2[k]) for (i, k) in enumerate(keys(node.uncertainties)))
 
@@ -778,9 +780,9 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         # if node.index == 2
         #     println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
         # end
-        if lagrangian_obj2 > lagrangian_obj
-            println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
-            return lagrangian_obj2, λ_L
+        if lagrangian_obj_bound2 > lagrangian_obj_bound
+            # println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
+            return lagrangian_obj_bound2, λ_L
         end
         # println("Lagrangian improved from $value_lagrange ", node.index, " ", lagrangian_obj, " ", lagrangian_obj2)
     end
@@ -790,7 +792,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
     # be feasible! Sometimes however, the dual from the LP solver might be
     # numerically infeasible when solved in the primal. That's a shame :(
     # If so, return the conic_obj instead.
-    return something(lagrangian_obj, conic_obj), conic_state_dual
+    return something(lagrangian_obj_bound, conic_obj), conic_state_dual
 end
 
 duality_log_key(::LagrangianConicDuality) = "S"

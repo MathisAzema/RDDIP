@@ -315,7 +315,8 @@ function get_worst_case_scenario_by_lagrangian(
     model::PolicyGraph{T},
     node::Node{T},
     state::Dict{Symbol,Float64},
-    outgoing_stage_heur::Dict{Symbol,Float64};
+    outgoing_stage_heur::Dict{Symbol,Float64},
+    duality_handler::Union{Nothing,AbstractDualityHandler};
     refine_upper_bound::Bool = true, #true = backward
 ) where {T}
     md = node.lagrangian_upper.model
@@ -362,7 +363,7 @@ function get_worst_case_scenario_by_lagrangian(
     for (name, var) in node.lagrangian_upper.uncertainty
         noise[name] = JuMP.value(var)
     end
-    objective = JuMP.objective_value(md)
+    objective = JuMP.objective_bound(md)
 
     num_states = length(node.states_upper)
     λ = zeros(num_states)
@@ -404,7 +405,13 @@ function get_worst_case_scenario_by_lagrangian(
         outgoing_state_values,
     )
     if cost_to_go_value_lower >= cost_to_go_value + 1e-5 
-        println("Lower bound value is greater than upper bound value!")
+        println(node.bellman_function.global_theta.cuts)
+        for (name, value) in outgoing_state_values
+            if value > 1e-5
+                println("$name => $value")
+            end
+        end
+        println("Lower bound $cost_to_go_value_lower value is greater than upper bound value $cost_to_go_value at node $(node.index)!")
     end
     intercept_lower = intercept - cost_to_go_value + cost_to_go_value_lower
     _refine_lagrangian_model(
@@ -417,9 +424,6 @@ function get_worst_case_scenario_by_lagrangian(
         0,
     )
 
-    # println(incoming_state_values)
-
-
     if node.index > 1 && refine_upper_bound
         previous_node = model.nodes[node.index-1]
         refine_bellman_function_upper(
@@ -430,10 +434,5 @@ function get_worst_case_scenario_by_lagrangian(
             objective,
         )
     end
-
-    if node.index == 1 
-        println(objective)
-    end
-
     return (objective = objective, noise = noise)
 end

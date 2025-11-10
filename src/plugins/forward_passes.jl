@@ -51,20 +51,24 @@ function forward_pass(
             node = model.nodes[node_index]
             lock(node.lock)
             try
-                # worstcase = get_worst_case_scenario_by_enumeration(
-                #     model,
-                #     node,
-                #     incoming_state_value,
-                #     options.duality_handler;
-                #     refine_upper_bound = false,
-                # )
-                worstcase = get_worst_case_scenario_by_lagrangian(
-                    model,
-                    node,
-                    incoming_state_value,
-                    incoming_state_value;
-                    refine_upper_bound = false,
-                )
+                if options.worstcasestartegy == RDDIP.Enumeration
+                    worstcase = get_worst_case_scenario_by_enumeration(
+                        model,
+                        node,
+                        incoming_state_value,
+                        options.duality_handler;
+                        refine_upper_bound = false,
+                    )
+                elseif options.worstcasestartegy == RDDIP.Lagrangian
+                    worstcase = get_worst_case_scenario_by_lagrangian(
+                        model,
+                        node,
+                        incoming_state_value,
+                        incoming_state_value,
+                        options.duality_handler;
+                        refine_upper_bound = false,
+                    )
+                end
                 if node.index == 1
                     upper_bound = worstcase.objective
                 end

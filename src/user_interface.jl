@@ -648,6 +648,13 @@ mutable struct LagrangianProblem
     cuts::Vector{Cut2}
 end
 
+struct WorstcaseStrategy
+    name::String
+end
+
+Enumeration = WorstcaseStrategy("Enumeration")
+Lagrangian = WorstcaseStrategy("Lagrangian")
+
 mutable struct Node{T}
     # The index of the node in the policy graph.
     index::T
@@ -921,18 +928,15 @@ function MarkovianPolicyGraph(
     return PolicyGraph(builder, MarkovianGraph(transition_matrices); kwargs...)
 end
 
-function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vector{JuMP.ConstraintRef})
+function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vector{JuMP.ConstraintRef}, instance::Instance)
     lagrangian_lower = node.lagrangian_lower
     mod = node.subproblem
-    # for (name, uncertainty) in node.uncertainties
-    #     JuMP.unfix(uncertainty.var)
-    # end
+    for (name, uncertainty) in node.uncertainties
+        JuMP.unfix(uncertainty.var)
+    end
     undo_relax = JuMP.relax_integrality(mod)
     new_model, _ = @suppress copy_model(mod)
     undo_relax()
-    # if node.index == 24
-    #     println(new_model)
-    # end
     copy_state_out = Dict()
     copy_state_in = Dict()
     copy_uncertainty = Dict()
@@ -946,7 +950,9 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
     @constraint(new_model, fix_out[name in keys(copy_state_out)], copy_state_out[name] == 0.0)
     @constraint(new_model, fix_in[name in keys(copy_state_in)], copy_state_in[name] == 0.0)
     @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+
     md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+
     hexpr = JuMP.objective_function(md)
     node_index = node.index
     theta = @variable(
@@ -973,10 +979,11 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
             @constraint(md, sum(coeff * uncertainty[Symbol(JuMP.name(var))] for (var, coeff) in f.terms) == s.value)
         end
     end
-    @constraint(md, [k in indexes], δ[k] <= SHEDDING_COST * uncertainty[k])
-    @constraint(md, [k in indexes], δ[k] >= -CURTAILEMENT_COST * uncertainty[k])
-    @constraint(md, [k in indexes], δ[k] <= lagrangian_lower.dual_variables_uncertainty[k] - CURTAILEMENT_COST * (1 - uncertainty[k]))
-    @constraint(md, [k in indexes], δ[k] >= lagrangian_lower.dual_variables_uncertainty[k] - SHEDDING_COST * (1 - uncertainty[k]))
+    max_D = maximum([d[node.index] for d in instance.Demandbus])*1.96*0.025
+    @constraint(md, [k in indexes], δ[k] <= SHEDDING_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] >= -CURTAILEMENT_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] <= lagrangian_lower.dual_variables_uncertainty[k] + CURTAILEMENT_COST * max_D * (1 - uncertainty[k]))
+    @constraint(md, [k in indexes], δ[k] >= lagrangian_lower.dual_variables_uncertainty[k] - SHEDDING_COST * max_D * (1 - uncertainty[k]))
     JuMP.set_objective_function(
         md,
             @expression(md, theta + sum(δ)),
@@ -990,15 +997,9 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
 
     lagrangian_upper = node.lagrangian_upper
     mod = node.subproblem
-    # for (name, uncertainty) in node.uncertainties
-    #     JuMP.unfix(uncertainty.var)
-    # end
     undo_relax = JuMP.relax_integrality(mod)
     new_model, _ = @suppress copy_model(mod)
     undo_relax()
-    # if node.index == 24
-    #     println(new_model)
-    # end
     copy_state_out = Dict()
     copy_state_in = Dict()
     copy_uncertainty = Dict()
@@ -1012,6 +1013,7 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
     @constraint(new_model, fix_out[name in keys(copy_state_out)], copy_state_out[name] == 0.0)
     @constraint(new_model, fix_in[name in keys(copy_state_in)], copy_state_in[name] == 0.0)
     @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+
     md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
     hexpr = JuMP.objective_function(md)
     node_index = node.index
@@ -1039,10 +1041,10 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
             @constraint(md, sum(coeff * uncertainty[Symbol(JuMP.name(var))] for (var, coeff) in f.terms) == s.value)
         end
     end
-    @constraint(md, [k in indexes], δ[k] <= SHEDDING_COST * uncertainty[k])
-    @constraint(md, [k in indexes], δ[k] >= -CURTAILEMENT_COST * uncertainty[k])
-    @constraint(md, [k in indexes], δ[k] <= lagrangian_upper.dual_variables_uncertainty[k] - CURTAILEMENT_COST * (1 - uncertainty[k]))
-    @constraint(md, [k in indexes], δ[k] >= lagrangian_upper.dual_variables_uncertainty[k] - SHEDDING_COST * (1 - uncertainty[k]))
+    @constraint(md, [k in indexes], δ[k] <= SHEDDING_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] >= -CURTAILEMENT_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] <= lagrangian_upper.dual_variables_uncertainty[k] + CURTAILEMENT_COST * max_D * (1 - uncertainty[k]))
+    @constraint(md, [k in indexes], δ[k] >= lagrangian_upper.dual_variables_uncertainty[k] - SHEDDING_COST * max_D * (1 - uncertainty[k]))
 
     JuMP.set_objective_function(
         md,
@@ -1299,29 +1301,35 @@ function PolicyGraph(
     end
 
     for (node_name, node) in policy_graph.nodes
+        # @constraint(node.subproblem, pos_in[key in keys(node.states)], node.states[key].in >= node.incoming_state_bounds[key][1])
+        # @constraint(node.subproblem, inf_1_in[key in keys(node.states)], node.states[key].in <= node.incoming_state_bounds[key][2])
+
+
+        # @constraint(node.uppersubproblem, pos_in[key in keys(node.states)], node.states_upper[key].in >= node.incoming_state_bounds[key][1])
+        # @constraint(node.uppersubproblem, inf_1_in[key in keys(node.states)], node.states_upper[key].in <= node.incoming_state_bounds[key][2])
         for (i, (key, state)) in enumerate(node.states)
             l, u, is_integer = node.incoming_state_bounds[key]
             if l > -Inf
                 @constraint(node.subproblem, state.in >= l)
-                JuMP.set_lower_bound(state.in, l)
+                # JuMP.set_lower_bound(state.in, l)
             end
             if u < Inf
                 @constraint(node.subproblem, state.in <= u)
-                JuMP.set_upper_bound(state.in, u)
+                # JuMP.set_upper_bound(state.in, u)
             end
         end
         for (i, (key, state)) in enumerate(node.states_upper)
             l, u, is_integer = node.incoming_state_bounds[key]
             if l > -Inf
                 @constraint(node.uppersubproblem, state.in >= l)
-                JuMP.set_lower_bound(state.in, l)
+                # JuMP.set_lower_bound(state.in, l)
             end
             if u < Inf
                 @constraint(node.uppersubproblem, state.in <= u)
-                JuMP.set_upper_bound(state.in, u)
+                # JuMP.set_upper_bound(state.in, u)
             end
         end
-        _initialize_lagrangian_problem(node, constraints_uncertainty[node_name])
+        _initialize_lagrangian_problem(node, constraints_uncertainty[node_name], instance)
         set_optimizer(node.lagrangian_lower.model, optimizer)
         set_silent(node.lagrangian_lower.model)
         set_optimizer(node.lagrangian_upper.model, optimizer)

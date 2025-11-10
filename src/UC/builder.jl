@@ -130,13 +130,14 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @variable(subproblem, power[i = 1:N]>=0)
     @variable(subproblem, power_real[i = 1:N]>=0)
     @variable(subproblem, power_prev[i = 1:N]>=0)
-    @constraint(subproblem,  [i = 1:N], power_dev[i] <= 0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
-    @constraint(subproblem,  [i = 1:N], power_dev[i] >= -0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
-    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) + power_dev[i] == power_real[i])
-    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power[i])
-    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].in*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power_prev[i])
-    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].out for k in 1:K) == is_on[i].out)
-    @constraint(subproblem,  [i = 1:N], sum(power_integer[i,k].in for k in 1:K) == is_on[i].in)
+
+    @constraint(subproblem, borne_sup_dev[i = 1:N], power_dev[i] <= 0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  borne_inf_dev[i = 1:N], power_dev[i] >= -0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  def_real[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) + power_dev[i] == power_real[i])
+    @constraint(subproblem,  def_power[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power[i])
+    @constraint(subproblem,  def_prev[i = 1:N], sum(power_integer[i,k].in*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power_prev[i])
+    @constraint(subproblem,  limit_out[i = 1:N], sum(power_integer[i,k].out for k in 1:K) == is_on[i].out)
+    @constraint(subproblem,  limit_in[i = 1:N], sum(power_integer[i,k].in for k in 1:K) == is_on[i].in)
 
     # @constraint(subproblem, [i in 1:N], is_on[i].out == 1)
     # if node == 3
@@ -170,9 +171,9 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     # @constraint(subproblem, [i = 1:N], sum(u[i,k].out for k in 0:thermal_units[i].MinUpTime-1) <= is_on[i].out)
     # @constraint(subproblem, [i = 1:N], sum(v[i,k].out for k in 0:thermal_units[i].MinDownTime-1) <= 1 - is_on[i].out)
 
-    @constraint(subproblem, [i = 1:N], is_on[i].out == is_on[i].in + start_up[i] - start_down[i])
-    @constraint(subproblem, [i = 1:N], start_up[i] <= is_on[i].out)
-    @constraint(subproblem, [i = 1:N], start_down[i] <= 1 - is_on[i].out)
+    @constraint(subproblem,  def_is_on[i = 1:N], is_on[i].out == is_on[i].in + start_up[i] - start_down[i])
+    @constraint(subproblem,  limit_start_up[i = 1:N], start_up[i] <= is_on[i].out)
+    @constraint(subproblem,  limit_start_down[i = 1:N], start_down[i] <= 1 - is_on[i].out)
 
     cstr = JuMP.ConstraintRef[]
     
@@ -189,8 +190,8 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
 
         # Random variables
     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
-    M = 1
-    Ω = [[(-1.0+(s-1)*2.0) for b in BusWind] for s in 1:M]
+    M = 3
+    Ω = [[(-1.0+(s-1)*1.0) for b in BusWind] for s in 1:M]
     P = [1/M for s in 1:M]
     # Ω = [[0.0 for b in BusWind]]
     # P = [1.0]
@@ -199,11 +200,11 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
         P = [1.0]
     end
     @variable(subproblem, uncertainty[s in 1:length(P)], Bin, RDDIP.Uncertain)
-    cstr_uncertainty1 = [@constraint(subproblem, sum(uncertainty[s].var for s in 1:length(P)) == 1)]
+    cstr_uncertainty1 = [@constraint(subproblem, sum_uncertainty, sum(uncertainty[s].var for s in 1:length(P)) == 1)]
     for c in cstr_uncertainty1
         push!(constraints_uncertainty, c)
     end
-    @constraint(subproblem, [k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
+    @constraint(subproblem, def_error_forecast[k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
     Ωs = [[1*(k==s) for k in 1:length(P)] for s in 1:length(P)]
     # RDDIP.parameterize(subproblem, Ωs, P) do ω
     #     for k in 1:length(P)
@@ -239,18 +240,18 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @constraints(
         subproblem,
         begin
-            [i = 1: N], power[i] <= thermal_units[i].MaxPower * is_on[i].out
-            [i = 1: N], power[i] >= thermal_units[i].MinPower * is_on[i].out
-            [i = 1: N], power_real[i] <= thermal_units[i].MaxPower * is_on[i].out
-            [i = 1: N], power_real[i] >= thermal_units[i].MinPower * is_on[i].out
-            [i = 1:N], power_real[i] - power_prev[i] <= (-thermal_units[i].DeltaRampUp)*start_up[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampUp)*is_on[i].out - (thermal_units[i].MinPower)*is_on[i].in
-            [i = 1: N], power_prev[i] - power_real[i] <= (-thermal_units[i].DeltaRampDown)*start_down[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampDown)*is_on[i].in - (thermal_units[i].MinPower)*is_on[i].out
-            [line in Lines], flow[line.b1,line.b2] <= line.Fmax
-            [line in Lines], flow[line.b1,line.b2] >= -line.Fmax
-            [line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
+            def_power_limit_upper[i = 1: N], power[i] <= thermal_units[i].MaxPower * is_on[i].out
+            def_power_limit_lower[i = 1: N], power[i] >= thermal_units[i].MinPower * is_on[i].out
+            def_power_real_limit_upper[i = 1: N], power_real[i] <= thermal_units[i].MaxPower * is_on[i].out
+            def_power_real_limit_lower[i = 1: N], power_real[i] >= thermal_units[i].MinPower * is_on[i].out
+            def_ramp_up[i = 1:N], power_real[i] - power_prev[i] <= (-thermal_units[i].DeltaRampUp)*start_up[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampUp)*is_on[i].out - (thermal_units[i].MinPower)*is_on[i].in
+            def_ramp_down[i = 1: N], power_prev[i] - power_real[i] <= (-thermal_units[i].DeltaRampDown)*start_down[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampDown)*is_on[i].in - (thermal_units[i].MinPower)*is_on[i].out
+            def_flow_limit_upper[line in Lines], flow[line.b1,line.b2] <= line.Fmax
+            def_flow_limit_lower[line in Lines], flow[line.b1,line.b2] >= -line.Fmax
+            def_flow[line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
         end
     )
-    cstr = [@constraint(subproblem,sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
+    cstr = [@constraint(subproblem, demand, sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
         # Stage-objective
     @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
 
