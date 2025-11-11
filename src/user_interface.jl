@@ -935,7 +935,7 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
         JuMP.unfix(uncertainty.var)
     end
     undo_relax = JuMP.relax_integrality(mod)
-    new_model, _ = @suppress copy_model(mod)
+    new_model, _ = safe_copy(mod)
     undo_relax()
     copy_state_out = Dict()
     copy_state_in = Dict()
@@ -998,7 +998,7 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
     lagrangian_upper = node.lagrangian_upper
     mod = node.subproblem
     undo_relax = JuMP.relax_integrality(mod)
-    new_model, _ = @suppress copy_model(mod)
+    new_model, _ = safe_copy(mod)
     undo_relax()
     copy_state_out = Dict()
     copy_state_in = Dict()
@@ -1111,6 +1111,15 @@ model = PolicyGraph(
 end
 ```
 """
+
+function safe_copy(model)
+    old_logger = global_logger()
+    global_logger(SimpleLogger(stderr, Logging.Error))  # Ignore les warnings
+    copied_model = copy_model(model)
+    global_logger(old_logger)
+    return copied_model
+end
+
 function PolicyGraph(
     builder::Function,
     instance::Instance,
@@ -1240,7 +1249,8 @@ function PolicyGraph(
 
         node.noise_terms = [Noise(scenario, P[i]) for (i, scenario) in enumerate(Scenario)]
 
-        uppersubproblem, _ = @suppress copy_model(subproblem)
+        # uppersubproblem, _ = @suppress copy_model(subproblem)
+        uppersubproblem, _ = safe_copy(subproblem)
         node.uppersubproblem = uppersubproblem
         for (name,state) in node.states
             node.states_upper[name] = State(JuMP.variable_by_name(uppersubproblem, string(name,"_in")), JuMP.variable_by_name(uppersubproblem, string(name,"_out")))

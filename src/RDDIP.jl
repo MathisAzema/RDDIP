@@ -25,6 +25,7 @@ using CSV
 using DataFrames
 using Suppressor
 using Dualization
+using Logging
 
 # Work-around for https://github.com/JuliaPlots/RecipesBase.jl/pull/55
 # Change this back to `import RecipesBase` once the fix is tagged.
