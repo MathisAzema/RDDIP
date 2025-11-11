@@ -20,6 +20,7 @@ struct ThermalUnit
 end
 
 struct Line
+    id::Int64
     b1::Int64
     b2::Int64 
     Fmax::Float64  
@@ -53,7 +54,7 @@ struct Instance
     TimeHorizon::Int64 
     N::Int64
     Thermalunits::Vector{ThermalUnit}
-    Lines::Dict{Tuple{Int64, Int64}, Line}
+    Lines::Vector{Line}
     Next::Vector{Vector{Int64}}
     Demandbus::Vector{Vector{Float64}}
     BusWind::Vector{Int64}

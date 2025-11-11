@@ -308,6 +308,8 @@ function write_subproblem_to_file(
     model = MOI.FileFormats.Model(; filename = filename)
     MOI.copy_to(model, JuMP.backend(node.subproblem))
     MOI.write_to_file(model, filename)
+    unset_silent(node.subproblem)
+    JuMP.optimize!(node.subproblem)
     if throw_error
         error(
             "Unable to retrieve solution from node $(node.index).\n\n",
@@ -554,6 +556,7 @@ function solve_subproblem(
     state::Dict{Symbol,Float64},
     noise;
     duality_handler::Union{Nothing,AbstractDualityHandler},
+    outgoing_state_next::Dict{Symbol,Float64} = Dict{Symbol,Float64}(),
     forward_pass::Bool = false, #false = backward pass
 ) where {T}
     _initialize_solver(node; throw_error = false)
@@ -629,7 +632,7 @@ function solve_subproblem(
     else #Backwardpass
         # println(1)
         @_timeit_threadsafe model.timer_output "get_dual_solution" begin
-            objective, dual_values = get_dual_solution(node, duality_handler)
+            objective, dual_values = get_dual_solution(node, duality_handler, outgoing_state_next)
         end
         # println(2)
         return (
@@ -793,6 +796,7 @@ function backward_pass(
                 node,
                 items,
                 outgoing_state,
+                sampled_states[index+1],
                 options.duality_handler,
                 options,
             )
@@ -941,6 +945,7 @@ function solve_all_children_robust(
     node::Node{T},
     items::BackwardPassItems,
     outgoing_state::Dict{Symbol,Float64},
+    outgoing_state_next::Dict{Symbol,Float64},
     duality_handler::Union{Nothing,AbstractDualityHandler},
     options,
 ) where {T}
@@ -969,7 +974,7 @@ function solve_all_children_robust(
                     model,
                     child_node,
                     outgoing_state,
-                    outgoing_state,
+                    outgoing_state_next,
                     duality_handler;
                     refine_upper_bound = true,
                 )
@@ -982,6 +987,7 @@ function solve_all_children_robust(
                     outgoing_state,
                     noise;
                     duality_handler = duality_handler,
+                    outgoing_state_next = outgoing_state_next,
                     forward_pass = false
                 )
             end

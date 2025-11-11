@@ -61,7 +61,7 @@ SDDiP(args...; kwargs...) = _deprecate_integrality_handler()
 
 ContinuousRelaxation(args...; kwargs...) = _deprecate_integrality_handler()
 
-function get_dual_solution(node::Node, ::Nothing)
+function get_dual_solution(node::Node, ::Nothing, outgoing_state_next::Dict{Symbol,Float64})
     return JuMP.objective_bound(node.subproblem), Dict{Symbol,Float64}()
 end
 
@@ -132,7 +132,7 @@ struct ContinuousConicDuality{O} <: AbstractDualityHandler
     end
 end
 
-function get_dual_solution(node::Node, ::ContinuousConicDuality)
+function get_dual_solution(node::Node, ::ContinuousConicDuality, outgoing_state_next::Dict{Symbol,Float64})
     if !_has_dual_solution(node)
         model = node.subproblem.ext[:RDDIP_policy_graph]
         attempt_numerical_recovery(model, node; require_dual = true)
@@ -262,10 +262,10 @@ end
 
 _sparsify(x::Float64) = ifelse(abs(x) < 1e-15, 0.0, x)
 
-function get_dual_solution(node::Node, lagrange::LagrangianDuality)
+function get_dual_solution(node::Node, lagrange::LagrangianDuality, outgoing_state_next::Dict{Symbol,Float64})
     undo_relax = _relax_integrality(node, lagrange.optimizer)
     optimize!(node.subproblem)
-    conic_obj, conic_dual, _ = get_dual_solution(node, ContinuousConicDuality())
+    conic_obj, conic_dual, _ = get_dual_solution(node, ContinuousConicDuality(), outgoing_state_next)
     undo_relax()
     s = JuMP.objective_sense(node.subproblem) == MOI.MIN_SENSE ? -1 : 1
     N = length(node.states)
@@ -577,10 +577,10 @@ mutable struct StrengthenedConicDuality{O} <: AbstractDualityHandler
     end
 end
 
-function get_dual_solution(node::Node, handler::StrengthenedConicDuality)
+function get_dual_solution(node::Node, handler::StrengthenedConicDuality, outgoing_state_next::Dict{Symbol,Float64})
     undo_relax = _relax_integrality(node, handler.optimizer)
     optimize!(node.subproblem)
-    conic_obj, conic_dual, _ = get_dual_solution(node, ContinuousConicDuality())
+    conic_obj, conic_dual, _ = get_dual_solution(node, ContinuousConicDuality(), outgoing_state_next)
     undo_relax()
     if !node.has_integrality
         return conic_obj, conic_dual  # If we're linear, return this!
@@ -659,10 +659,10 @@ function _refine_lagrangian_model(
     return
 end
 
-function get_dual_solution(node::Node, handler::LagrangianConicDuality)
+function get_dual_solution(node::Node, handler::LagrangianConicDuality, outgoing_state_next::Dict{Symbol,Float64})
     undo_relax = _relax_integrality(node, handler.optimizer)
     optimize!(node.subproblem)
-    conic_obj, conic_state_dual, conic_uncertainty_dual = get_dual_solution(node, ContinuousConicDuality())
+    conic_obj, conic_state_dual, conic_uncertainty_dual = get_dual_solution(node, ContinuousConicDuality(), outgoing_state_next)
     undo_relax()
     if !node.has_integrality
         return conic_obj, conic_state_dual  # If we're linear, return this!
@@ -670,10 +670,8 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
     num_states = length(node.states)
     λ_k, x = zeros(num_states), zeros(num_states)
     h_expr = Vector{AffExpr}(undef, num_states)
-    outgoing_lagrangian_heur = Dict{Symbol,Float64}()
     for (i, (key, state)) in enumerate(node.states)
         x[i] = JuMP.fix_value(state.in)
-        outgoing_lagrangian_heur[key] = x[i]
         h_expr[i] = @expression(node.subproblem, state.in - x[i])
         JuMP.unfix(state.in)
         λ_k[i] = conic_state_dual[key]
@@ -723,7 +721,7 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality)
         node,
         x,
         ξ,
-        outgoing_lagrangian_heur,
+        outgoing_state_next,
         # outgoing_state_values, #Incoming or outgoing ? Incoming ensure feasibility, outgoing seems better but we have to return something if unbounded.
     )
 

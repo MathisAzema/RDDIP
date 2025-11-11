@@ -96,7 +96,7 @@
 
 function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subproblem::Model, node::Int)
     # State variables
-    K = 4
+    K = 8
     N=instance.N
     T= instance.TimeHorizon
     thermal_units=values(instance.Thermalunits)
@@ -131,8 +131,8 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @variable(subproblem, power_real[i = 1:N]>=0)
     @variable(subproblem, power_prev[i = 1:N]>=0)
 
-    @constraint(subproblem, borne_sup_dev[i = 1:N], power_dev[i] <= 0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
-    @constraint(subproblem,  borne_inf_dev[i = 1:N], power_dev[i] >= -0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem, borne_sup_dev[i = 1:N], power_dev[i] <= 0.1*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  borne_inf_dev[i = 1:N], power_dev[i] >= -0.1*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
     @constraint(subproblem,  def_real[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) + power_dev[i] == power_real[i])
     @constraint(subproblem,  def_power[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power[i])
     @constraint(subproblem,  def_prev[i = 1:N], sum(power_integer[i,k].in*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power_prev[i])
@@ -175,24 +175,30 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @constraint(subproblem,  limit_start_up[i = 1:N], start_up[i] <= is_on[i].out)
     @constraint(subproblem,  limit_start_down[i = 1:N], start_down[i] <= 1 - is_on[i].out)
 
-    cstr = JuMP.ConstraintRef[]
-    
-
+    Numlines=length(instance.Lines)
         # Control variables
     @variables(subproblem, begin
         power_shedding[b in Buses] >= 0
         power_curtailement[b in Buses] >= 0
         θ[b in Buses] 
-        flow[b in Buses, bp in Next[b]]
+        flow[l in 1:Numlines]
     end)
 
     t=node
 
         # Random variables
     @variable(subproblem, error_forecast[k in 1:NumWindfarms])
-    M = 3
-    Ω = [[(-1.0+(s-1)*1.0) for b in BusWind] for s in 1:M]
-    P = [1/M for s in 1:M]
+    M=NumWindfarms
+    Ω = [[0.0 for k in 1:NumWindfarms] for s in 1:3*M]
+    P = [1/(3*M) for s in 1:3*M]
+    for s in 1:M
+        Ω[s][s] = -1.0
+        Ω[s+M][s] = 0.0
+        Ω[s+2M][s] = 1.0
+    end
+    # M = 3
+    # Ω = [[(-1.0+(s-1)*1.0) for b in BusWind] for s in 1:M]
+    # P = [1/M for s in 1:M]
     # Ω = [[0.0 for b in BusWind]]
     # P = [1.0]
     if t == 1
@@ -205,26 +211,6 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
         push!(constraints_uncertainty, c)
     end
     @constraint(subproblem, def_error_forecast[k in 1:NumWindfarms], error_forecast[k] == sum(Ω[s][k]*uncertainty[s].var for s in 1:length(P)))
-    Ωs = [[1*(k==s) for k in 1:length(P)] for s in 1:length(P)]
-    # RDDIP.parameterize(subproblem, Ωs, P) do ω
-    #     for k in 1:length(P)
-    #         # Prefer dictionary access using the uncertainty variable symbol
-    #         key = Symbol("uncertainty[$k]")
-    #         val = nothing
-    #         if isa(ω, AbstractDict)
-    #             val = get(ω, key, nothing)
-    #         end
-    #         if val === nothing
-    #             # Fallback to vector-like indexing for backward compatibility
-    #             if isa(ω, AbstractVector) && length(ω) >= k
-    #                 val = ω[k]
-    #             else
-    #                 error("No realization available for uncertainty $(key)")
-    #             end
-    #         end
-    #         JuMP.fix(uncertainty[k].var, val)
-    #     end
-    # end
 
     Scenario = [Dict{Symbol, Float64}() for s in 1:length(P)]
     # println(Scenario)
@@ -246,12 +232,12 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
             def_power_real_limit_lower[i = 1: N], power_real[i] >= thermal_units[i].MinPower * is_on[i].out
             def_ramp_up[i = 1:N], power_real[i] - power_prev[i] <= (-thermal_units[i].DeltaRampUp)*start_up[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampUp)*is_on[i].out - (thermal_units[i].MinPower)*is_on[i].in
             def_ramp_down[i = 1: N], power_prev[i] - power_real[i] <= (-thermal_units[i].DeltaRampDown)*start_down[i] + (thermal_units[i].MinPower + thermal_units[i].DeltaRampDown)*is_on[i].in - (thermal_units[i].MinPower)*is_on[i].out
-            def_flow_limit_upper[line in Lines], flow[line.b1,line.b2] <= line.Fmax
-            def_flow_limit_lower[line in Lines], flow[line.b1,line.b2] >= -line.Fmax
-            def_flow[line in Lines], flow[line.b1,line.b2] == line.B12*(θ[line.b1]-θ[line.b2])
+            def_flow_limit_upper[line in Lines], flow[line.id] <= line.Fmax
+            def_flow_limit_lower[line in Lines], flow[line.id] >= -line.Fmax
+            def_flow[line in Lines], flow[line.id] == line.B12*(θ[line.b1]-θ[line.b2])
         end
     )
-    cstr = [@constraint(subproblem, demand, sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b))+sum(flow[b,bp] for bp in Next[b])) for b in Buses]
+    @constraint(subproblem, demand[b in Buses], sum(power_real[unit.name] for unit in thermal_units if unit.Bus==b) - power_curtailement[b] + power_shedding[b] + sum(flow[line.id] for line in Lines if line.b2==b) - sum(flow[line.id] for line in Lines if line.b1==b) == instance.Demandbus[b][t]*(1+force*1.96*0.025*sum(error_forecast[w] for w in 1:NumWindfarms if BusWind[w]==b)))
         # Stage-objective
     @stageobjective(subproblem, sum(unit.LinearTerm*power_real[unit.name] for unit in thermal_units)+sum(RDDIP.SHEDDING_COST*power_shedding[b]+RDDIP.CURTAILEMENT_COST*power_curtailement[b] for b in Buses) + sum(unit.ConstTerm*is_on[unit.name].out+unit.StartUpCost*start_up[unit.name]+unit.StartDownCost*start_down[unit.name] for unit in thermal_units))
 

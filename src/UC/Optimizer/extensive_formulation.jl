@@ -360,8 +360,8 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, time
 
     @variable(model, power_integer[unit in thermal_units_name, t in 0:T, k in 1:K], Bin)
     @variable(model, power_dev[unit in thermal_units_name, t in 0:T])
-    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]<=0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
-    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]>=-0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]<=0.1*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]>=-0.1*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
     @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name,t]==sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
     @constraint(model,  [unit in thermal_units, t in 1:T], power_real[unit.name,t]==power_dev[unit.name,t]+sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
     @constraint(model,  [unit in thermal_units, t in 0:T], sum(power_integer[unit.name,t,k] for k in 1:K)==is_on[unit.name,t])
@@ -403,16 +403,19 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, time
         idx_list[unit.name] = idx-1
     end
     @constraint(model,  [unit in thermal_units_name; idx_list[unit]>=1], power_integer[unit, 0, idx_list[unit]]==1)
+
+    Numlines=length(instance.Lines)
+
     @variable(model, θ[b in Buses, t in 1:T])
-    @variable(model, flow[b in Buses, bp in Next[b], t in 1:T])
+    @variable(model, flow[l in 1:Numlines, t in 1:T])
     
 
-    Lines=values(instance.Lines)
-    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]<=line.Fmax)
-    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]>=-line.Fmax)
-    @constraint(model, [line in Lines, t in 1:T], flow[line.b1,line.b2,t]==line.B12*(θ[line.b1,t]-θ[line.b2,t]))
+    Lines=instance.Lines
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]<=line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]>=-line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]==line.B12*(θ[line.b1,t]-θ[line.b2,t]))
 
-    @constraint(model,  demand[t in 1:T, b in Buses], sum(power_real[unit.name, t] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t]-power_curtailement[b,t]==instance.Demandbus[b][t]+sum(flow[b,bp,t] for bp in Next[b]))
+    cstr = @constraint(model,  demand[t in 1:T, b in Buses], sum(power_real[unit.name, t] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t]-power_curtailement[b,t] + sum(flow[line.id,t] for line in Lines if line.b2==b) - sum(flow[line.id,t] for line in Lines if line.b1==b) ==instance.Demandbus[b][t])
 
     @objective(model, Min, sum(thermal_cost[t] for t in 1:T))
   
@@ -435,7 +438,7 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, time
         # solution_thermal=[solution_is_on, solution_start_up, solution_start_down]
 
         # return instance.name, computation_time, objective_value(model), objective_bound(model), solution_thermal, S, batch,  gap, force, value.(power)
-        return value.(power_dev), value.(power_integer), value.(power), value.(is_on), value.(power_real), value.(thermal_cost)
+        return value.(power_dev), value.(power_integer), value.(power), value.(is_on), value.(power_real), value.(thermal_cost), value.(power_shedding), value.(power_curtailement), value.(flow)
     else
         return nothing
     end
