@@ -37,15 +37,15 @@ variables up to the user. (Hint: we don't think you should do it!)
 
 ## Other additions
 
-We also added support for strengthened Benders cuts, which we call
-`RDDIP.StrengthenedConicDuality()`.
+We also added support for SB_ Benders cuts, which we call
+`RDDIP.SB_ConicDuality()`.
 
 ## Future plans
 
 We have a number of future plans in the works, including better Lagrangian
 solution methods and better ways of integrating the different types of duality
 handlers (e.g., start with ContinuousConicDuality, then shift to
-StrengthenedConicDuality, then LagrangianDuality).
+SB_ConicDuality, then LagrangianDuality).
 
 If these sorts of things interest you, the code is now much more hackable, so
 please reach out or read https://github.com/odow/RDDIP.jl/issues/246.
@@ -507,14 +507,14 @@ end
 
 duality_log_key(::LagrangianDuality) = "L"
 
-# ==================== StrengthenedConicDuality ==================== #
+# ==================== SB_ConicDuality ==================== #
 
 """
-    StrengthenedConicDuality(optimizer = nothing)
+    SB_ConicDuality(optimizer = nothing)
 
-Obtain dual variables in the backward pass using strengthened conic duality.
+Obtain dual variables in the backward pass using SB_ conic duality.
 
-This method is also known in the literature as Strengthened Benders.
+This method is also known in the literature as SB_ Benders.
 
 ## Arguments
 
@@ -525,14 +525,14 @@ This method is also known in the literature as Strengthened Benders.
 
 ## Example
 
-Train a model using `StrengthenedConicDuality` by passing it to the
+Train a model using `SB_ConicDuality` by passing it to the
 `duality_handler` keyword argument of [`RDDIP.train`](@ref):
 
 ```jldoctest
 julia> import RDDIP, HiGHS, Ipopt
 
-julia> duality_handler = RDDIP.StrengthenedConicDuality(Ipopt.Optimizer)
-RDDIP.StrengthenedConicDuality{DataType}(Ipopt.Optimizer)
+julia> duality_handler = RDDIP.SB_ConicDuality(Ipopt.Optimizer)
+RDDIP.SB_ConicDuality{DataType}(Ipopt.Optimizer)
 
 julia> model = RDDIP.LinearPolicyGraph(;
            stages = 2,
@@ -546,7 +546,7 @@ julia> model = RDDIP.LinearPolicyGraph(;
 
 julia> RDDIP.train(
            model;
-           duality_handler = RDDIP.StrengthenedConicDuality(),
+           duality_handler = RDDIP.SB_ConicDuality(),
            print_level = 0,
        )
 ```
@@ -568,16 +568,16 @@ L(λ) = min Cᵢ(x̄, u, w) + θᵢ - λ' (x̄ - x`)
 ```
 to obtain a better estimate of the intercept.
 """
-mutable struct StrengthenedConicDuality{O} <: AbstractDualityHandler
+mutable struct SB_ConicDuality{O} <: AbstractDualityHandler
     optimizer::O
     name::String
 
-    function StrengthenedConicDuality(optimizer = nothing)
-        return new{typeof(optimizer)}(optimizer, "StrengthenedConicDuality")
+    function SB_ConicDuality(optimizer = nothing)
+        return new{typeof(optimizer)}(optimizer, "SB_ConicDuality")
     end
 end
 
-function get_dual_solution(node::Node, handler::StrengthenedConicDuality, outgoing_state_next::Dict{Symbol,Float64})
+function get_dual_solution(node::Node, handler::SB_ConicDuality, outgoing_state_next::Dict{Symbol,Float64})
     undo_relax = _relax_integrality(node, handler.optimizer)
     optimize!(node.subproblem)
     conic_obj, conic_dual, _ = get_dual_solution(node, ContinuousConicDuality(), outgoing_state_next)
@@ -609,16 +609,16 @@ function get_dual_solution(node::Node, handler::StrengthenedConicDuality, outgoi
     return something(lagrangian_obj, conic_obj), conic_dual
 end
 
-duality_log_key(::StrengthenedConicDuality) = "S"
+duality_log_key(::SB_ConicDuality) = "S"
 
 # New Mathis #
 
-mutable struct LagrangianConicDuality{O} <: AbstractDualityHandler
+mutable struct SB_L_ConicDuality{O} <: AbstractDualityHandler
     optimizer::O
     name::String
 
-    function LagrangianConicDuality(optimizer = nothing)
-        return new{typeof(optimizer)}(optimizer, "LagrangianConicDuality")
+    function SB_L_ConicDuality(optimizer = nothing)
+        return new{typeof(optimizer)}(optimizer, "SB_L_ConicDuality")
     end
 end
 
@@ -631,11 +631,7 @@ function _refine_lagrangian_model(
     outgoing_state_values::Dict{Symbol,Float64},
     type::Int, # 0 = lower bound, 1 = upper bound
 ) where T
-    # println(type)
-    # println("incoming_state_values: ", incoming_state_values)
-    # println(sum(node.lagrangian_lower.dual_variables_state_in[k] * incoming_state_values[k] for (k, state) in node.states))
     if type == 0
-        # println("Adding cut to lower Lagrangian model")
         cstr = @constraint(node.lagrangian_lower.model,
             node.lagrangian_lower.theta <= intercept - sum(
                 node.lagrangian_lower.dual_variables_state_in[k] * incoming_state_values[k] for
@@ -645,7 +641,6 @@ function _refine_lagrangian_model(
         )
         push!(node.lagrangian_lower.cuts, Cut2(intercept, cost_to_go_value, cstr, outgoing_state_values))
     elseif type == 1
-        # println("Adding cut to upper Lagrangian model")
         cstr = @constraint(node.lagrangian_upper.model,
             node.lagrangian_upper.theta <= intercept - sum(
                 node.lagrangian_upper.dual_variables_state_in[k] * incoming_state_values[k] for
@@ -659,7 +654,7 @@ function _refine_lagrangian_model(
     return
 end
 
-function get_dual_solution(node::Node, handler::LagrangianConicDuality, outgoing_state_next::Dict{Symbol,Float64})
+function get_dual_solution(node::Node, handler::SB_L_ConicDuality, outgoing_state_next::Dict{Symbol,Float64})
     undo_relax = _relax_integrality(node, handler.optimizer)
     optimize!(node.subproblem)
     conic_obj, conic_state_dual, conic_uncertainty_dual = get_dual_solution(node, ContinuousConicDuality(), outgoing_state_next)
@@ -793,7 +788,81 @@ function get_dual_solution(node::Node, handler::LagrangianConicDuality, outgoing
     return something(lagrangian_obj_bound, conic_obj), conic_state_dual
 end
 
-duality_log_key(::LagrangianConicDuality) = "S"
+duality_log_key(::SB_L_ConicDuality) = "SB_L"
+
+mutable struct L_ConicDuality{O} <: AbstractDualityHandler
+    optimizer::O
+    name::String
+
+    function L_ConicDuality(optimizer = nothing)
+        return new{typeof(optimizer)}(optimizer, "L_ConicDuality")
+    end
+end
+
+function get_dual_solution(node::Node, handler::L_ConicDuality, outgoing_state_next::Dict{Symbol,Float64})
+    num_states = length(node.states)
+    x = zeros(num_states)
+    h_expr = Vector{AffExpr}(undef, num_states)
+    for (i, (key, state)) in enumerate(node.states)
+        x[i] = JuMP.fix_value(state.in)
+        h_expr[i] = @expression(node.subproblem, state.in - x[i])
+        JuMP.unfix(state.in)
+    end
+
+    num_uncertainties = length(node.uncertainties)
+    ξ = zeros(num_uncertainties)
+    for (i, (key, uncertainty)) in enumerate(node.uncertainties)
+        ξ[i] = JuMP.fix_value(uncertainty.var)
+    end
+
+    value_lagrange, λ_L, μ_L = _solve_lagrangian_problem(
+        node,
+        x,
+        ξ,
+        outgoing_state_next,
+    )
+
+    λ_k2 = zeros(num_states)
+    for (i, (key, state)) in enumerate(node.states)
+        λ_k2[i] = λ_L[key]
+    end
+    lagrangian_obj_bound2, lagrangian_obj2, cost_to_go_value2, incoming_state_values2, incoming_uncertainty_values2, outgoing_state_values2 = _solve_primal_problem_lower(node, node.subproblem, λ_k2, h_expr)
+
+    intercept2 = lagrangian_obj2 - sum(λ_k2[i] * (x[i] - incoming_state_values2[k]) for (i, k) in enumerate(keys(node.states)))
+
+    _refine_lagrangian_model(
+        node,
+        intercept2,
+        cost_to_go_value2,
+        incoming_state_values2,
+        incoming_uncertainty_values2,
+        outgoing_state_values2,
+        0,
+    )
+
+    cost_to_go_value_upper2 = compute_upper_bellman_value(
+        node.upper_bellman_function,
+        outgoing_state_values2,
+    )
+    intercept_upper2 = intercept2 - cost_to_go_value2 + cost_to_go_value_upper2
+    _refine_lagrangian_model(
+        node,
+        intercept_upper2,
+        cost_to_go_value_upper2,
+        incoming_state_values2,
+        incoming_uncertainty_values2,
+        outgoing_state_values2,
+        1,
+    )
+
+    for (i, (_, state)) in enumerate(node.states)
+        JuMP.fix(state.in, x[i]; force = true)
+    end
+
+    return lagrangian_obj_bound2, λ_L
+end
+
+duality_log_key(::L_ConicDuality) = "L"
 
 # ============================== BanditDuality =============================== #
 
@@ -813,7 +882,7 @@ problem. The arms to choose between are given by `args`.
 The default implementation of `BanditDuality` that picks between the arms:
 
  * [`ContinuousConicDuality`](@ref)
- * [`StrengthenedConicDuality`](@ref)
+ * [`SB_ConicDuality`](@ref)
 
 If `optimizer` is specified, RDDIP.jl will call
 `JuMP.set_optimizer(subproblem, optimizer)` before solving problems on the
@@ -831,16 +900,16 @@ julia> import RDDIP, HiGHS, Ipopt
 julia> RDDIP.BanditDuality(Ipopt.Optimizer)
 BanditDuality with arms:
  * RDDIP.ContinuousConicDuality{DataType}(Ipopt.Optimizer)
- * RDDIP.StrengthenedConicDuality{DataType}(Ipopt.Optimizer)
+ * RDDIP.SB_ConicDuality{DataType}(Ipopt.Optimizer)
 
 julia> duality_handler = RDDIP.BanditDuality(
            RDDIP.ContinuousConicDuality(),
-           RDDIP.StrengthenedConicDuality(),
+           RDDIP.SB_ConicDuality(),
            RDDIP.LagrangianDuality(),
        )
 BanditDuality with arms:
  * RDDIP.ContinuousConicDuality{Nothing}(nothing)
- * RDDIP.StrengthenedConicDuality{Nothing}(nothing)
+ * RDDIP.SB_ConicDuality{Nothing}(nothing)
  * RDDIP.LagrangianDuality{Nothing}(RDDIP.LocalImprovementSearch.BFGS(100), nothing)
 
 julia> model = RDDIP.LinearPolicyGraph(;
@@ -903,7 +972,7 @@ end
 function BanditDuality(optimizer = nothing)
     return BanditDuality(
         ContinuousConicDuality(optimizer),
-        StrengthenedConicDuality(optimizer),
+        SB_ConicDuality(optimizer),
     )
 end
 
