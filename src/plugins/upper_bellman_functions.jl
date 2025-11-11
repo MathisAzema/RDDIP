@@ -405,7 +405,6 @@ function get_worst_case_scenario_by_lagrangian(
         outgoing_state_values,
     )
     if cost_to_go_value_lower >= cost_to_go_value + 1e-5 
-        println(node.bellman_function.global_theta.cuts)
         for (name, value) in outgoing_state_values
             if value > 1e-5
                 println("$name => $value")
