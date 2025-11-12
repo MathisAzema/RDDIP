@@ -106,7 +106,7 @@ function initialize_upper_bellman_function(
         JuMP.@constraint(md, [k in keys(x′)], δmd_abs[k] >= δmd[k])
         JuMP.@constraint(md, [k in keys(x′)], δmd_abs[k] >= -δmd[k])
 
-        JuMP.@variable(sp, 0 <= σ0 <= 1)
+        JuMP.@variable(sp, 0 <= σ0)
         if JuMP.objective_sense(sp) == MOI.MIN_SENSE
             JuMP.@constraint(
                 sp,
@@ -120,7 +120,7 @@ function initialize_upper_bellman_function(
         JuMP.@constraint(sp, x_cc[k in keys(x′)], δ[k] == x′[k])
         JuMP.@constraint(sp, σ_cc, σ0 == 1)
 
-        JuMP.@variable(md, 0 <= σ0md <= 1)
+        JuMP.@variable(md, 0 <= σ0md)
         if JuMP.objective_sense(md) == MOI.MIN_SENSE
             JuMP.@constraint(
                 md,
@@ -165,7 +165,7 @@ function _add_vertex_var_to_model(V::UpperConvexApproximation, vertex::Vertex)
     model = JuMP.owner_model(V.theta)
 
     # Add a new variable to the convex combination constraints
-    σk = JuMP.@variable(model, lower_bound = 0.0, upper_bound = 1.0)
+    σk = JuMP.@variable(model, lower_bound = 0.0)
     JuMP.set_normalized_coefficient(model[:σ_cc], σk, 1)
 
     xk = vertex.state
@@ -179,7 +179,7 @@ function _add_vertex_var_to_model(V::UpperConvexApproximation, vertex::Vertex)
     vertex.variable_ref = σk
 
     md = V.model
-    σkmd = JuMP.@variable(md, lower_bound = 0.0, upper_bound = 1.0)
+    σkmd = JuMP.@variable(md, lower_bound = 0.0)
     JuMP.set_normalized_coefficient(md[:σ_ccmd], σkmd, 1)
 
     xk = vertex.state
@@ -192,6 +192,16 @@ function _add_vertex_var_to_model(V::UpperConvexApproximation, vertex::Vertex)
 
     vertex.variable_refmd = σkmd
     return
+end
+
+function _refine_lagrangian_continuous(
+    node::Node{T},
+    outgoing_state::Dict{Symbol,Float64},
+    objective_realization::Float64,
+) where {T}
+    lagrangian_continuous = node.lagrangian_continuous
+    md = lagrangian_continuous.model
+    @constraint(md, lagrangian_continuous.dual_var_theta_cc * objective_realization + lagrangian_continuous.dual_var_σ_cc + sum(lagrangian_continuous.dual_var_x_cc[name]*val for (name,val) in outgoing_state) <= 0)
 end
 
 function refine_bellman_function_upper(
@@ -228,7 +238,6 @@ function _refine_upper_bellman_function_no_lock(
         outgoing_state,
         objective_realization,
     )
-
 end
 
 function _add_average_vertex(
@@ -305,6 +314,12 @@ function get_worst_case_scenario_by_enumeration(
             state,
             objectives[imax],
         )
+
+        _refine_lagrangian_continuous(
+            previous_node,
+            state,
+            objectives[imax],
+        )
     end
 
     return (objective = objectives[imax], noise = node.noise_terms[imax].term)
@@ -348,11 +363,12 @@ function get_worst_case_scenario_by_lagrangian(
         JuMP.optimize!(md)
     end
     if JuMP.termination_status(md) != MOI.OPTIMAL && JuMP.termination_status(md) != MOI.DUAL_INFEASIBLE
-        println(md)
-        ps = JuMP.primal_status(md)
-        ds = JuMP.dual_status(md)
-        println("Primal status: ", ps)
-        println("Dual status: ", ds)
+        error(
+                    "Unable to retrieve solution from node $(node.index).\n\n",
+                    "  Termination status : $(JuMP.termination_status(node.subproblem))\n",
+                    "  Primal status      : $(JuMP.primal_status(node.subproblem))\n",
+                    "  Dual status        : $(JuMP.dual_status(node.subproblem)).\n\n",
+                )
         println(objective_value(md))
         println((node.index, length(node.lagrangian_upper.cuts)))
         # end
@@ -432,6 +448,69 @@ function get_worst_case_scenario_by_lagrangian(
             state,
             objective,
         )
+
+        _refine_lagrangian_continuous(
+            previous_node,
+            state,
+            objective
+        )
     end
     return (objective = objective, noise = noise)
+end
+
+function get_heuristic_outgoing_state(
+    model::PolicyGraph{T},
+    node::Node{T},
+    incoming_state::Dict{Symbol,Float64},
+    duality_handler::Union{Nothing,AbstractDualityHandler},
+)  where {T}
+    md = node.lagrangian_continuous.model
+    primal_obj = JuMP.objective_function(md)
+
+    JuMP.set_objective_function(
+        md,
+        @expression(md, primal_obj + sum(
+            node.lagrangian_continuous.dual_variables_state_in[name] * incoming_state[name] for
+            (name, _) in node.states)),
+    )
+
+    JuMP.optimize!(md)
+
+    if JuMP.termination_status(md) != MOI.OPTIMAL
+        set_optimizer_attribute(md, "Presolve", 0)
+        unset_silent(md)
+        JuMP.optimize!(md)
+    end
+    if JuMP.termination_status(md) != MOI.OPTIMAL && JuMP.termination_status(md) == MOI.DUAL_INFEASIBLE
+        println(node.index)
+        println(md)
+        return nothing
+    end
+    if JuMP.termination_status(md) != MOI.OPTIMAL && JuMP.termination_status(md) != MOI.DUAL_INFEASIBLE
+        error(
+                    "Unable to retrieve solution from node $(node.index).\n\n",
+                    "  Termination status : $(JuMP.termination_status(node.subproblem))\n",
+                    "  Primal status      : $(JuMP.primal_status(node.subproblem))\n",
+                    "  Dual status        : $(JuMP.dual_status(node.subproblem)).\n\n",
+                )
+        println((node.index, length(node.lagrangian_continuous.cuts)))
+        # end
+        return nothing, nothing
+    end
+
+    noise = Dict{Symbol,Float64}()
+    for (name, var) in node.lagrangian_continuous.uncertainty
+        noise[name] = JuMP.value(var)
+    end
+
+    JuMP.set_objective_function(md, primal_obj)
+
+    subproblem_results = solve_subproblem_upper(
+        model,
+        node,
+        incoming_state,
+        noise,
+        duality_handler = duality_handler
+    )
+    return subproblem_results.out_state
 end

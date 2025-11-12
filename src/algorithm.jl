@@ -1109,7 +1109,6 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
         forward_trajectory = forward_pass(model, options, options.forward_pass)
         options.forward_pass_callback(forward_trajectory)
     end
-    # println("forward pass complete.")
     @_timeit_threadsafe model.timer_output "backward_pass" begin
         cuts = backward_pass(
             model,
@@ -1118,7 +1117,6 @@ function iteration(model::PolicyGraph{T}, options::Options) where {T}
             forward_trajectory.sampled_states,
         )
     end
-    # println("backward pass complete.")
     # @_timeit_threadsafe model.timer_output "calculate_bound" begin
     #     bound = calculate_bound(
     #         model;

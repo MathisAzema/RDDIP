@@ -648,6 +648,16 @@ mutable struct LagrangianProblem
     cuts::Vector{Cut2}
 end
 
+mutable struct LagrangianContinuous
+    model::JuMP.Model
+    dual_variables_state_in::Dict{Symbol,JuMP.VariableRef}
+    dual_variables_uncertainty::Dict{Symbol,JuMP.VariableRef}
+    uncertainty::Dict{Symbol,JuMP.VariableRef}
+    dual_var_theta_cc::JuMP.VariableRef
+    dual_var_x_cc::Dict{Symbol,JuMP.VariableRef}
+    dual_var_σ_cc::JuMP.VariableRef
+end
+
 struct WorstcaseStrategy
     name::String
 end
@@ -663,6 +673,7 @@ mutable struct Node{T}
     uppersubproblem::JuMP.Model
     lagrangian_lower::LagrangianProblem
     lagrangian_upper::LagrangianProblem
+    lagrangian_continuous::LagrangianContinuous
     # A vector of the child nodes.
     children::Vector{Noise{T}}
     # A vector of the discrete stagewise-independent noise terms.
@@ -1059,6 +1070,73 @@ function _initialize_lagrangian_problem(node::Node, constraints_uncertainty::Vec
     return
 end
 
+function _initialize_lagrangian_continuous_problem(node::Node, constraints_uncertainty::Vector{JuMP.ConstraintRef}, instance::Instance)
+    lagrangian_continuous = node.lagrangian_continuous
+    mod = node.uppersubproblem
+
+    undo_relax = JuMP.relax_integrality(mod)
+    new_model, _ = safe_copy(mod)
+    undo_relax()
+    copy_state_in = Dict()
+    copy_uncertainty = Dict()
+    for (name, _) in node.states
+        copy_state_in[name] = JuMP.variable_by_name(new_model, string(name,"_in"))
+    end
+    for (name, _) in node.uncertainties
+        copy_uncertainty[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+
+    @constraint(new_model, fix_in[name in keys(copy_state_in)], copy_state_in[name] == 0.0)
+    @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+
+    md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+
+    hexpr = JuMP.objective_function(md)
+    node_index = node.index
+    theta = @variable(
+        md,
+        base_name = "theta_$(node_index)",
+    )
+    @constraint(md, theta <= hexpr)
+
+    lagrangian_continuous.dual_variables_state_in = Dict(name => md[Symbol("dual_var_fix_in[$name]")] for name in keys(copy_state_in))
+    lagrangian_continuous.dual_variables_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
+
+    indexes = keys(lagrangian_continuous.dual_variables_uncertainty)
+    @variable(md, δ[indexes])
+    @variable(md, uncertainty[indexes], Bin)
+    for cstr in constraints_uncertainty
+        f = JuMP.constraint_object(cstr).func
+        s = JuMP.constraint_object(cstr).set
+        if s isa MOI.GreaterThan
+            @constraint(md, sum(coeff * uncertainty[Symbol(JuMP.name(var))] for (var, coeff) in f.terms) >= s.lower)
+        elseif s isa MOI.LessThan
+            @constraint(md, sum(coeff * uncertainty[Symbol(JuMP.name(var))] for (var, coeff) in f.terms) <= s.upper)
+        elseif s isa MOI.EqualTo
+            @constraint(md, sum(coeff * uncertainty[Symbol(JuMP.name(var))] for (var, coeff) in f.terms) == s.value)
+        end
+    end
+    max_D = maximum([d[node.index] for d in instance.Demandbus])*1.96*0.025
+    @constraint(md, [k in indexes], δ[k] <= SHEDDING_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] >= -CURTAILEMENT_COST * max_D * uncertainty[k])
+    @constraint(md, [k in indexes], δ[k] <= lagrangian_continuous.dual_variables_uncertainty[k] + CURTAILEMENT_COST * max_D * (1 - uncertainty[k]))
+    @constraint(md, [k in indexes], δ[k] >= lagrangian_continuous.dual_variables_uncertainty[k] - SHEDDING_COST * max_D * (1 - uncertainty[k]))
+    JuMP.set_objective_function(
+        md,
+            @expression(md, theta + sum(δ)),
+    )
+    
+    lagrangian_continuous.model = md
+    lagrangian_continuous.uncertainty = Dict(name => uncertainty[name] for name in indexes)
+
+    if node.index!=instance.TimeHorizon
+        lagrangian_continuous.dual_var_theta_cc = JuMP.variable_by_name(md, "dual_var_theta_cc")
+        lagrangian_continuous.dual_var_x_cc = Dict(name => md[Symbol("dual_var_x_cc[$name]")] for name in keys(node.states))
+        lagrangian_continuous.dual_var_σ_cc = md[Symbol("dual_var_σ_cc")]
+    end
+
+    return
+end
 """
     PolicyGraph(
         builder::Function,
@@ -1203,6 +1281,17 @@ function PolicyGraph(
         )
         lagrangian_problem_upper = LagrangianProblem(lagrangian_upper, theta_upper, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), nothing, Cut2[])
 
+        lagrangian_continuous_md = JuMP.Model()
+        dual_var_theta_cc = @variable(
+            lagrangian_continuous_md,
+            base_name = "dual_var_theta_cc",
+        )
+        dual_var_σ_cc = @variable(
+            lagrangian_continuous_md,
+            base_name = "dual_var_σ_cc",
+        )
+        lagrangian_continuous = LagrangianContinuous(lagrangian_continuous_md, Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), Dict{Symbol,JuMP.VariableRef}(), dual_var_theta_cc, Dict{Symbol,JuMP.VariableRef}(), dual_var_σ_cc)
+
 
         node = Node(
             node_index,
@@ -1210,6 +1299,7 @@ function PolicyGraph(
             uppersubproblem,
             lagrangian_problem_lower,
             lagrangian_problem_upper,
+            lagrangian_continuous,
             Noise{T}[],
             Noise[],
             (ω) -> nothing,
@@ -1344,6 +1434,10 @@ function PolicyGraph(
         set_silent(node.lagrangian_lower.model)
         set_optimizer(node.lagrangian_upper.model, optimizer)
         set_silent(node.lagrangian_upper.model)
+
+        _initialize_lagrangian_continuous_problem(node, constraints_uncertainty[node_name], instance)
+        set_optimizer(node.lagrangian_continuous.model, optimizer)
+        set_silent(node.lagrangian_continuous.model)
     end
     return policy_graph
 end

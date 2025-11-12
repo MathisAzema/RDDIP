@@ -7,9 +7,9 @@ function parse_nc4(name_instance, optimizer, T=24)
     data_block=data.group[Blocks[1]]
     # TimeHorizon= data_block.dim["TimeHorizon"]
     TimeHorizon= T
-    demand=round.(data_block["ActivePowerDemand"].var[:])
+    demand=round.(data_block["ActivePowerDemand"].var[:])./10
     N=size(keys(data_block.group))[1]-1
-    # N=1
+    N=1
     Thermal_units=Vector{ThermalUnit}(undef, N)
     Hydro_units=Dict()
     k=0
@@ -67,7 +67,7 @@ function parse_nc4(name_instance, optimizer, T=24)
     end
     Buses=1:1
     Next=[[]]
-    Lines=Dict()
+    Lines = Line[]
     Demandbus=[demand]
     BusWind=[1]
 

@@ -60,11 +60,17 @@ function forward_pass(
                         refine_upper_bound = false,
                     )
                 elseif options.worstcasestartegy == RDDIP.Lagrangian
+                    outgoing_state_heur = get_heuristic_outgoing_state(
+                        model,
+                        node,
+                        incoming_state_value,
+                        options.duality_handler
+                    )
                     worstcase = get_worst_case_scenario_by_lagrangian(
                         model,
                         node,
                         incoming_state_value,
-                        incoming_state_value,
+                        outgoing_state_heur,
                         options.duality_handler;
                         refine_upper_bound = false,
                     )
