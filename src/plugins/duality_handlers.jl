@@ -357,11 +357,23 @@ function _solve_primal_problem_lower(
     incoming_uncertainty_values = Dict{Symbol,Float64}()
     outgoing_state_values = Dict{Symbol,Float64}()
     for (key, state) in node.states
-        incoming_state_values[key] = value(state.in)
-        outgoing_state_values[key] = value(state.out)
+        if JuMP.is_binary(state.in)
+            incoming_state_values[key] = round(value(state.in))
+        else
+            incoming_state_values[key] = value(state.in)
+        end
+        if JuMP.is_binary(state.out)
+            outgoing_state_values[key] = round(value(state.out))
+        else
+            outgoing_state_values[key] = value(state.out)
+        end
     end
     for (key, uncertainty) in node.uncertainties
-        incoming_uncertainty_values[key] = value(uncertainty.var)
+        if JuMP.is_binary(uncertainty.var)
+            incoming_uncertainty_values[key] = round(value(uncertainty.var))
+        else
+            incoming_uncertainty_values[key] = value(uncertainty.var)
+        end
     end
     JuMP.set_objective_function(model, primal_obj)
     return obj_bound, obj, cost_to_go_value, incoming_state_values, incoming_uncertainty_values, outgoing_state_values
