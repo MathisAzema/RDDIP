@@ -32,6 +32,7 @@ function bin_extensive_neutral(instance; silent=true,  force::Float64=1.0, S::In
     @constraint(model,  thermal_cost>=sum(thermal_fuel_cost[s] for s in 1:S)/S)
 
     thermal_unit_commit_constraints(model, instance)
+    @constraint(model, thermal_fixed_cost>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units for t in 1:T))
     thermal_unit_capacity_constraints_scenarios(model, instance, S)
 
     @variable(model, θ[b in Buses, t in 1:T, s in 1:S])
@@ -109,6 +110,7 @@ function extensive_AVAR(instance; silent=true,  α=0, force::Float64=1.0, S::Int
     @constraint(model,  [s in 1:S], thermal_fuel_cost_pos[s]>=thermal_fuel_cost[s]-z_AVAR)
 
     thermal_unit_commit_constraints(model, instance)
+    @constraint(model, thermal_fixed_cost>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units for t in 1:T))
     thermal_unit_capacity_constraints_scenarios(model, instance, S)
 
     @variable(model, θ[b in Buses, t in 1:T, s in 1:S])
@@ -192,6 +194,7 @@ function extended_extensive_neutral(instance; silent=true,  force::Float64=1.0, 
     @constraint(model,  thermal_cost>=sum(thermal_fuel_cost[s] for s in 1:S)/S)
 
     thermal_unit_commit_constraints_extended(model, instance)
+    @constraint(model, thermal_fixed_cost>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units for t in 1:T))
     thermal_unit_capacity_constraints_scenarios(model, instance, S)
 
     @variable(model, θ[b in Buses, t in 1:T, s in 1:S])
@@ -360,8 +363,8 @@ function bin_extensive_neutral_integer(instance; K=5, silent=true, gap=gap, time
 
     @variable(model, power_integer[unit in thermal_units_name, t in 0:T, k in 1:K], Bin)
     @variable(model, power_dev[unit in thermal_units_name, t in 0:T])
-    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]<=0.1*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
-    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]>=-0.1*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]<=0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
+    @constraint(model,  [unit in thermal_units, t in 1:T], power_dev[unit.name,t]>=-0.5*is_on[unit.name,t]*(unit.MaxPower-unit.MinPower)/(K-1))
     @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name,t]==sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
     @constraint(model,  [unit in thermal_units, t in 1:T], power_real[unit.name,t]==power_dev[unit.name,t]+sum(power_integer[unit.name,t,k]*(unit.MinPower+(k-1)*(unit.MaxPower-unit.MinPower)/(K-1)) for k in 1:K))
     @constraint(model,  [unit in thermal_units, t in 0:T], sum(power_integer[unit.name,t,k] for k in 1:K)==is_on[unit.name,t])

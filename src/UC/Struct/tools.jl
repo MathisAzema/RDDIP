@@ -200,3 +200,25 @@ function heuristic_cost(unit, a, b, price_unit, gamma_val, muup, mudown, current
     end
     return res    
 end
+
+function generate_all_Γ_tuple(n::Int64, Γ::Int64)
+    D_set=[]
+    function generate_Γ_tuple(n::Int64, Γ::Int64, current_tuple::Vector{Any}=[])
+        if length(current_tuple) == Γ
+            push!(D_set, current_tuple)
+        else
+            start_val = isempty(current_tuple) ? 1 : current_tuple[end] + 1
+            for i in start_val:n
+                generate_Γ_tuple(n, Γ, vcat(current_tuple, i))
+            end
+        end
+    end
+    generate_Γ_tuple(n, Γ)
+    uncertainty_set = [zeros(Int64, n) for _ in 1:length(D_set)]
+    for (idx, tuple) in enumerate(D_set)
+        for t in tuple
+            uncertainty_set[idx][t] = 1
+        end
+    end
+    return uncertainty_set
+end

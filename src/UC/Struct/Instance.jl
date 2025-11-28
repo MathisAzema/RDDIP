@@ -53,6 +53,7 @@ struct Instance
     name::String
     TimeHorizon::Int64 
     N::Int64
+    N1::Int64
     Thermalunits::Vector{ThermalUnit}
     Lines::Vector{Line}
     Next::Vector{Vector{Int64}}

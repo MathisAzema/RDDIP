@@ -1,4 +1,4 @@
-function parse_nc4(name_instance, optimizer, T=24)
+function parse_nc4(name_instance, optimizer, T=24; N1=5)
     """
     Parse the SMS++ instances
     """
@@ -7,9 +7,10 @@ function parse_nc4(name_instance, optimizer, T=24)
     data_block=data.group[Blocks[1]]
     # TimeHorizon= data_block.dim["TimeHorizon"]
     TimeHorizon= T
-    demand=round.(data_block["ActivePowerDemand"].var[:])./10
+    # TimeHorizon = 2
+    demand=round.(data_block["ActivePowerDemand"].var[:])
     N=size(keys(data_block.group))[1]-1
-    N=1
+    # N=2
     Thermal_units=Vector{ThermalUnit}(undef, N)
     Hydro_units=Dict()
     k=0
@@ -95,10 +96,10 @@ function parse_nc4(name_instance, optimizer, T=24)
     push!(Training_set, [day for day in Nb_total_scenario_training+1:Nb_total_scenario_training+Nb_total_scenario_test])
     WGscenario=[hcat(WGscenariob...)]
     model_Q_jab=Dict{Tuple{Int64, Int64, Int64}, JuMP.Model}()
-    return Instance(name_instance, TimeHorizon, N, Thermal_units, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
+    return Instance(name_instance, TimeHorizon, N, N1, Thermal_units, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
 end
 
-function parse_IEEE_JEAS(folder, optimizer; NumWind=91)
+function parse_IEEE_JEAS(folder, optimizer; N1=35, NumWind=91)
     """
     Parse the IEEE 118-bus instnace
     """
@@ -165,5 +166,5 @@ function parse_IEEE_JEAS(folder, optimizer; NumWind=91)
     push!(Training_set, [day for day in Test_set])
     model_Q_jab=Dict{Tuple{Int64, Int64, Int64}, JuMP.Model}()
 
-    return Instance(name_instance, TimeHorizon, N, Thermal_units, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
+    return Instance(name_instance, TimeHorizon, N, N1, Thermal_units, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
 end

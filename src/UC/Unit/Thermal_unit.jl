@@ -22,7 +22,6 @@ function thermal_unit_commit_constraints(model, instance)
     is_on=model[:is_on]
     start_up=model[:start_up]
     start_down=model[:start_down]
-    thermal_fixed_cost=model[:thermal_fixed_cost]
 
     T= instance.TimeHorizon
     thermal_units=values(instance.Thermalunits)
@@ -39,7 +38,41 @@ function thermal_unit_commit_constraints(model, instance)
 
     @constraint(model,  [unit in thermal_units; unit.InitUpDownTime==nothing], is_on[unit.name, 0]==0)
 
-    @constraint(model, thermal_fixed_cost>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units for t in 1:T))
+    for unit in thermal_units
+        if (unit.InitialPower-unit.MinPower)/unit.DeltaRampDown <0
+            limit=-1
+        else
+            limit=Int64(ceil((unit.InitialPower-unit.MinPower)/unit.DeltaRampDown))
+        end
+        for t in 0:limit
+            @constraint(model, is_on[unit.name, t]==1)
+        end
+    end
+end
+
+function thermal_unit_commit_constraintsN1(model, instance)
+    """
+    Define first-stage constraints in the 3-bin formulation
+    """
+    is_on=model[:is_on]
+    start_up=model[:start_up]
+    start_down=model[:start_down]
+
+    T= instance.TimeHorizon
+    N1 = instance.N1
+    thermal_units=values(instance.Thermalunits)[1:N1]
+
+    @constraint(model,  [unit in thermal_units, t in 1:T], is_on[unit.name, t]-is_on[unit.name, t-1]==start_up[unit.name, t]-start_down[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_up[unit.name, t]<=is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_down[unit.name, t]<=1-is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime!=nothing], sum(start_up[unit.name, τ] for τ in max(1, t-unit.MinUpTime+1):t)+1*(t<unit.MinUpTime-unit.InitUpDownTime+1)*(unit.InitUpDownTime>0) <= is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime!=nothing], sum(start_down[unit.name, τ] for τ in max(1, t-unit.MinDownTime+1):t)+1*(t<unit.MinDownTime+unit.InitUpDownTime+1)*(unit.InitUpDownTime<0) <= 1-is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime==nothing], sum(start_up[unit.name, τ] for τ in max(1, t-unit.MinUpTime+1):t) <= is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime==nothing], sum(start_down[unit.name, τ] for τ in max(1, t-unit.MinDownTime+1):t) <= 1-is_on[unit.name, t])
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime!=nothing], is_on[unit.name, 0]==(unit.InitUpDownTime>=0))
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime==nothing], is_on[unit.name, 0]==0)
 
     for unit in thermal_units
         if (unit.InitialPower-unit.MinPower)/unit.DeltaRampDown <0
@@ -49,6 +82,43 @@ function thermal_unit_commit_constraints(model, instance)
         end
         for t in 0:limit
             @constraint(model, is_on[unit.name, t]==1)
+        end
+    end
+end
+
+function thermal_unit_commit_constraintsN2(model, instance)
+    """
+    Define first-stage constraints in the 3-bin formulation
+    """
+    is_on=model[:is_on]
+    start_up=model[:start_up]
+    start_down=model[:start_down]
+
+    T= instance.TimeHorizon
+    N1 = instance.N1
+    N2 = instance.N - N1
+    thermal_units=values(instance.Thermalunits)[N1+1:end]
+
+    @constraint(model,  [unit in thermal_units, t in 1:T], is_on[unit.name-N1, t]-is_on[unit.name-N1, t-1]==start_up[unit.name-N1, t]-start_down[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_up[unit.name-N1, t]<=is_on[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T], start_down[unit.name-N1, t]<=1-is_on[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime!=nothing], sum(start_up[unit.name-N1, τ] for τ in max(1, t-unit.MinUpTime+1):t)+1*(t<unit.MinUpTime-unit.InitUpDownTime+1)*(unit.InitUpDownTime>0) <= is_on[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime!=nothing], sum(start_down[unit.name-N1, τ] for τ in max(1, t-unit.MinDownTime+1):t)+1*(t<unit.MinDownTime+unit.InitUpDownTime+1)*(unit.InitUpDownTime<0) <= 1-is_on[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime==nothing], sum(start_up[unit.name-N1, τ] for τ in max(1, t-unit.MinUpTime+1):t) <= is_on[unit.name-N1, t])
+    @constraint(model,  [unit in thermal_units, t in 1:T; unit.InitUpDownTime==nothing], sum(start_down[unit.name-N1, τ] for τ in max(1, t-unit.MinDownTime+1):t) <= 1-is_on[unit.name-N1, t])
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime!=nothing], is_on[unit.name-N1, 0]==(unit.InitUpDownTime>=0))
+
+    @constraint(model,  [unit in thermal_units; unit.InitUpDownTime==nothing], is_on[unit.name-N1, 0]==0)
+
+    for unit in thermal_units
+        if (unit.InitialPower-unit.MinPower)/unit.DeltaRampDown <0
+            limit=-1
+        else
+            limit=Int64(ceil((unit.InitialPower-unit.MinPower)/unit.DeltaRampDown))
+        end
+        for t in 0:limit
+            @constraint(model, is_on[unit.name-N1, t]==1)
         end
     end
 end

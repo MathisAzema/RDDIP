@@ -49,6 +49,11 @@ include("UC/Optimizer/add_cut_AVAR.jl")
 include("UC/Optimizer/benders.jl")
 include("UC/Optimizer/benders_AVAR.jl")
 include("UC/Optimizer/options.jl")
+include("UC/Optimizer/CCG_RO.jl")
+include("UC/Optimizer/add_cut_RO.jl")
+include("UC/Optimizer/benders_RO.jl")
+
+
 
 # Modelling interface.
 include("user_interface.jl")

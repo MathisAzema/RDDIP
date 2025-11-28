@@ -35,8 +35,8 @@ function subproblem_builder_UC(instance::RDDIP.Instance, force::Float64, subprob
     @variable(subproblem, power_real[i = 1:N]>=0)
     @variable(subproblem, power_prev[i = 1:N]>=0)
 
-    @constraint(subproblem, borne_sup_dev[i = 1:N], power_dev[i] <= 0.1*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
-    @constraint(subproblem,  borne_inf_dev[i = 1:N], power_dev[i] >= -0.1*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem, borne_sup_dev[i = 1:N], power_dev[i] <= 0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
+    @constraint(subproblem,  borne_inf_dev[i = 1:N], power_dev[i] >= -0.5*is_on[i].out*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1))
     @constraint(subproblem,  def_real[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) + power_dev[i] == power_real[i])
     @constraint(subproblem,  def_power[i = 1:N], sum(power_integer[i,k].out*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power[i])
     @constraint(subproblem,  def_prev[i = 1:N], sum(power_integer[i,k].in*(thermal_units[i].MinPower + (k-1)*(thermal_units[i].MaxPower - thermal_units[i].MinPower)/(K-1)) for k in 1:K) == power_prev[i])
