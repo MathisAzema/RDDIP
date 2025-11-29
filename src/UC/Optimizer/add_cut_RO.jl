@@ -381,7 +381,7 @@ function solve_second_stage_RO_lagrangianUncertainty(twoROmodel::twoRO, instance
     T= instance.TimeHorizon
     N = instance.N
     N1 = instance.N1
-    N2 = instance.N - N1
+    N2 = N - N1
 
     solution_is_on = solution_xN1[1]
 
@@ -402,6 +402,8 @@ function solve_second_stage_RO_lagrangianUncertainty(twoROmodel::twoRO, instance
     JuMP.optimize!(subproblem.model)
 
     obj = JuMP.objective_value(subproblem.model)
+
+    worst_case = [JuMP.value(uncertainty[t]) for t in 1:T]
 
     worst_case = [round(JuMP.value(uncertainty[t])) for t in 1:T]
 
@@ -490,17 +492,17 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
         end
 
         # println(("callback", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + worst_case_cost_obj, thermal_fixed_cost_val+thermal_cost_val))
-        # println(("callback2", add_cut, thermal_fixed_cost_val, results_price_relaxation.obj, worst_case_cost_obj, thermal_cost_val))
+        println(("callback2", add_cut, thermal_fixed_cost_val, results_price_relaxation.obj, worst_case_cost_obj, thermal_cost_val))
 
         #Calcul des coefficients de la coupe
 
-        cost_SB, sol_dual_var = get_SB_cut_RO(twoROmodel, solution_xN1, worst_case, instance)
+        # cost_SB, sol_dual_var = get_SB_cut_RO(twoROmodel, solution_xN1, worst_case, instance)
 
-        # println((thermal_fixed_cost_val, worst_case_cost_obj, cost_SB, thermal_cost_val))
-        if thermal_fixed_cost_val+cost_SB >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-            _add_SB_cut(cb_data, master_pb, instance, solution_xN1, cost_SB, sol_dual_var)
-            add_cut = true
-        end
+        # # println((thermal_fixed_cost_val, worst_case_cost_obj, cost_SB, thermal_cost_val))
+        # if thermal_fixed_cost_val+cost_SB >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
+        #     _add_SB_cut(cb_data, master_pb, instance, solution_xN1, cost_SB, sol_dual_var)
+        #     add_cut = true
+        # end
     end
 
     return update_UB, thermal_fixed_cost_val+worst_case_cost_obj, worst_case_cost_obj
@@ -602,6 +604,7 @@ function get_worst_case_RO_enumeration(twoROmodel::twoRO, solution_xN1::Vector{M
     uncertainty_set = generate_all_Γ_tuple(T, Γ)
     worst_case_cost = -Inf
     worst_case = Dict{Int, Float64}()
+    start = time()
     for uncertainty in uncertainty_set
         uncertainty_dict = Dict(t => uncertainty[t]*1.0 for t in 1:T)
         obj, bound, _ = solve_second_stage_RO(twoROmodel, solution_xN1, uncertainty_dict, instance)
@@ -610,6 +613,7 @@ function get_worst_case_RO_enumeration(twoROmodel::twoRO, solution_xN1::Vector{M
             worst_case = uncertainty_dict
         end
     end
+    println(time() - start)
     return worst_case_cost, worst_case
 end
 
@@ -972,7 +976,9 @@ function get_worst_case_RO_lagrangianUncertainty_callback(twoROmodel::twoRO, sol
     set_optimizer_attribute(lagrangian.model, "LazyConstraints", 1)
     MOI.set(lagrangian.model, Gurobi.CallbackFunction(), my_callback_function)
 
+    start = time()
     JuMP.optimize!(lagrangian.model)
+    println(time() - start)
 
     worst_case_cost_bound = JuMP.objective_bound(lagrangian.model)
 

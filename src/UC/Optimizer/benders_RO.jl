@@ -62,7 +62,7 @@ function benders_RO_callback(instance;silent=true, Γ=0, force=1, gap=0.05, time
 
     set_optimizer_attribute(master_pb, "TimeLimit", timelimit-(time() - start))
     set_optimizer_attribute(master_pb, "LazyConstraints", 1)
-    MOI.set(master_pb, Gurobi.CallbackFunction(), my_callback_function)
+    # MOI.set(master_pb, Gurobi.CallbackFunction(), my_callback_function)
     start = time()
     newgap=gap/100
     set_optimizer_attribute(master_pb, "MIPGap", newgap)
@@ -215,7 +215,7 @@ function benders_RO_bin_callback2(instance;silent=true, Γ=0, force=1, gap=0.05,
 
     twoROmodel = twoRO(master_pb, lagrangian, lagrangianUncertainty, subproblem, oracleContinuousRO, pricerelaxation)
 
-    # return twoROmodel
+    return twoROmodel
     
     infty=1e9
     LB=1

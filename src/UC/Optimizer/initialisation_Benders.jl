@@ -797,9 +797,9 @@ function subproblemRO(instance, Γ)
     Numlines=length(instance.Lines)
     thermal_units=instance.Thermalunits
 
-    @variable(model, is_on[i in 1:N, t in 0:T]>=0)
-    @variable(model, start_up[i in 1:N, t in 1:T]>=0)
-    @variable(model, start_down[i in 1:N, t in 1:T]>=0)
+    @variable(model, is_on[i in 1:N, t in 0:T])
+    @variable(model, start_up[i in 1:N, t in 1:T])
+    @variable(model, start_down[i in 1:N, t in 1:T])
 
     @variable(model, thermal_fuel_cost>=0)
 
@@ -808,17 +808,32 @@ function subproblemRO(instance, Γ)
     @variable(model, power_curtailement[b in Buses, t in 1:T]>=0)
 
     # @variable(model, uncertainty[t in 1:T]>=0)
-    @variable(model, uncertainty[t in 1:T], Bin)
+    @variable(model, uncertainty[t in 1:T], Bin) #Binary is very more efficient here to learn \mu
 
 
-    @constraint(model, [i in 1:N, t in 1:T], is_on[i,t] <= 1)
+    @constraint(model, [i in 1:N, t in 0:T], is_on[i,t] <= 1)
     @constraint(model, [i in 1:N, t in 1:T], start_up[i,t] <= 1)
     @constraint(model, [i in 1:N, t in 1:T], start_down[i,t] <= 1)
+    @constraint(model, [i in 1:N, t in 0:T], is_on[i,t] >= 0)
+    @constraint(model, [i in 1:N, t in 1:T], start_up[i,t] >= 0)
+    @constraint(model, [i in 1:N, t in 1:T], start_down[i,t] >= 0)
+
     @constraint(model, [t in 1:T], uncertainty[t] <= 1)
 
     @constraint(model, sum(uncertainty[t] for t in 1:T) <= Γ)
 
-    for i in 1:N
+    # for i in 1:N
+    #     for t in 0:T
+    #         JuMP.set_binary(is_on[i, t])
+    #     end
+    #     for t in 1:T
+    #         JuMP.set_binary(start_up[i, t])
+    #         JuMP.set_binary(start_down[i, t])
+    #     end
+    # end
+
+    for k in 1:N2
+        i = k + N1
         for t in 0:T
             JuMP.set_binary(is_on[i, t])
         end
@@ -827,6 +842,7 @@ function subproblemRO(instance, Γ)
             JuMP.set_binary(start_down[i, t])
         end
     end
+
 
     @variable(model, thermal_fixed_cost>=0)
 
