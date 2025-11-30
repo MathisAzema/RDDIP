@@ -62,7 +62,7 @@ function benders_RO_callback(instance;silent=true, Γ=0, force=1, gap=0.05, time
 
     set_optimizer_attribute(master_pb, "TimeLimit", timelimit-(time() - start))
     set_optimizer_attribute(master_pb, "LazyConstraints", 1)
-    # MOI.set(master_pb, Gurobi.CallbackFunction(), my_callback_function)
+    MOI.set(master_pb, Gurobi.CallbackFunction(), my_callback_function)
     start = time()
     newgap=gap/100
     set_optimizer_attribute(master_pb, "MIPGap", newgap)
@@ -71,19 +71,16 @@ function benders_RO_callback(instance;silent=true, Γ=0, force=1, gap=0.05, time
 
     feasibleSolutionFound = primal_status(master_pb) == MOI.FEASIBLE_POINT
 
+    N1 = instance.N1
+
     if feasibleSolutionFound
 
-        solution_is_on = convert(Matrix{Float64}, value.(master_pb[:is_on]))
-        solution_start_up = convert(Matrix{Float64}, value.(master_pb[:start_up]))
-        solution_start_down = convert(Matrix{Float64}, value.(master_pb[:start_down]))
-
-        solution_x = [solution_is_on, solution_start_up, solution_start_down]
-
-        current_solution = solution_x
+        states_1_val = Dict(Symbol("is_on[$i,$t]") => JuMP.value(master_pb[:is_on][i,t]) for i in 1:N1, t in 0:T)
+        states_2_val = Dict(Symbol("is_on[$i,$t]") => JuMP.value(master_pb[:is_on][i,t]) for i in N1+1:N, t in 0:T)
 
         println((value(master_pb[:thermal_fixed_cost]), value(master_pb[:thermal_cost])))
 
-        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), current_solution, Time_subproblem, gap, force
+        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, states_2_val
     else
         return Time_subproblem
     end
@@ -103,12 +100,11 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
 
     master_pb=master_RO_bin_problem_extended(instance, silent=silent)
     lagrangian = Lagrangian_RO_problem(instance; silent=true, Γ=Γ)
-    lagrangianUncertainty = Lagrangian_uncertainty_RO_problem(instance; silent=true, Γ=Γ)
     subproblem = subproblemRO(instance, Γ)
     oracleContinuousRO = oracle_Continuous_RO_problem(instance; silent=true, Γ=Γ)
     pricerelaxation = initialize_price_relaxation(instance)
 
-    twoROmodel = twoRO(master_pb, lagrangian, lagrangianUncertainty, subproblem, oracleContinuousRO, pricerelaxation)
+    twoROmodel = twoRO(master_pb, lagrangian, subproblem, oracleContinuousRO, pricerelaxation)
 
     # return twoROmodel
     
@@ -135,6 +131,8 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
             solution_start_up = convert(Matrix{Float64}, round.(callback_value.(cb_data, master_pb[:start_up])))
             solution_start_down = convert(Matrix{Float64}, round.(callback_value.(cb_data, master_pb[:start_down])))
 
+            states_1_val = Dict(Symbol("is_on[$i,$t]") => round(callback_value.(cb_data, master_pb[:is_on][i,t])) for i in 1:N1, t in 0:T)
+
             solution_gamma = Dict{Tuple{Int, Int, Int}, Float64}()
             gamma_val=round.(callback_value.(cb_data, master_pb[:gamma]))
             for unit in thermal_units_N1
@@ -142,9 +140,8 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
                     solution_gamma[unit.name,a,b]=gamma_val[unit.name, [a,b]]
                 end
             end
-            solution_x = [solution_is_on, solution_start_up, solution_start_down]
 
-            update_UB, second_stage_cost_ub, worst_case_cost = add_cut_RO_bin(cb_data, twoROmodel, instance, Time_subproblem, solution_x, solution_gamma; gap=gap)
+            update_UB, second_stage_cost_ub, worst_case_cost = add_cut_RO_bin(cb_data, twoROmodel, instance, Time_subproblem, states_1_val, solution_gamma; gap=gap)
 
             # println(("H",k, update_UB, second_stage_cost_ub, UB))
 
@@ -180,15 +177,9 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
 
     if feasibleSolutionFound
 
-        solution_is_on = convert(Matrix{Float64}, value.(master_pb[:is_on]))
-        solution_start_up = convert(Matrix{Float64}, value.(master_pb[:start_up]))
-        solution_start_down = convert(Matrix{Float64}, value.(master_pb[:start_down]))
+        states_1_val = Dict(Symbol("is_on[$i,$t]") => JuMP.value(master_pb[:is_on][i,t]) for i in 1:N1, t in 0:T)
 
-        solution_x = [solution_is_on, solution_start_up, solution_start_down]
-
-        current_solution = solution_x
-
-        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), current_solution, Time_subproblem, gap, force, Γ, k
+        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, Time_subproblem, gap, force, Γ, k
     else
         return nothing
     end
@@ -208,12 +199,11 @@ function benders_RO_bin_callback2(instance;silent=true, Γ=0, force=1, gap=0.05,
 
     master_pb=master_RO_bin_problem_extended(instance, silent=silent)
     lagrangian = Lagrangian_RO_problem(instance; silent=true, Γ=Γ)
-    lagrangianUncertainty = Lagrangian_uncertainty_RO_problem(instance; silent=true, Γ=Γ)
     subproblem = subproblemRO(instance, Γ)
     oracleContinuousRO = oracle_Continuous_RO_problem(instance; silent=true, Γ=Γ)
     pricerelaxation = initialize_price_relaxation(instance)
 
-    twoROmodel = twoRO(master_pb, lagrangian, lagrangianUncertainty, subproblem, oracleContinuousRO, pricerelaxation)
+    twoROmodel = twoRO(master_pb, lagrangian, subproblem, oracleContinuousRO, pricerelaxation)
 
     return twoROmodel
     
