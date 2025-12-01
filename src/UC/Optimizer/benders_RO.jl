@@ -93,18 +93,18 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
     """
 
     T= instance.TimeHorizon
-    N=instance.N
     N1=instance.N1
     thermal_units=values(instance.Thermalunits)
     thermal_units_N1=thermal_units[1:N1]
 
-    master_pb=master_RO_bin_problem_extended(instance, silent=silent)
+    master_pb_RO=master_RO_bin_problem_extended(instance, silent=silent)
     lagrangian = Lagrangian_RO_problem(instance; silent=true, Γ=Γ)
     subproblem = subproblemRO(instance, Γ)
     oracleContinuousRO = oracle_Continuous_RO_problem(instance; silent=true, Γ=Γ)
     pricerelaxation = initialize_price_relaxation(instance)
 
-    twoROmodel = twoRO(master_pb, lagrangian, subproblem, oracleContinuousRO, pricerelaxation)
+    twoROmodel = twoRO(master_pb_RO, lagrangian, subproblem, oracleContinuousRO, pricerelaxation)
+    master_pb = twoROmodel.master_pb.model
 
     # return twoROmodel
     
@@ -116,8 +116,6 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
     UB=infty
     k=0
     Time_subproblem = []
-
-    master_pb=twoROmodel.master_pb
 
     function my_callback_function(cb_data, cb_where::Cint)
 
@@ -147,7 +145,7 @@ function benders_RO_bin_callback(instance;silent=true, Γ=0, force=1, gap=0.05, 
 
             if second_stage_cost_ub<= 0.999999*UB && update_UB && k>=10
                 UB=second_stage_cost_ub
-                # println("UB : ", UB)
+                println("UB : ", UB)
                 cstr=@build_constraint(master_pb[:thermal_cost] + master_pb[:thermal_fixed_cost] <= second_stage_cost_ub)
                 MOI.submit(master_pb, MOI.LazyConstraint(cb_data), cstr)
                 if k>=10 #Force to the new best solution after 10 iterations

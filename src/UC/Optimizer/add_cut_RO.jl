@@ -3,6 +3,7 @@ mutable struct ResultsPriceRelaxation
     dual_muup::Matrix{Float64}
     dual_mudown::Matrix{Float64}
     price_demand::Matrix{Float64}
+    gradient::Matrix{Float64}
 end
 
 struct cutRO
@@ -360,7 +361,7 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
     N1 = instance.N1
     thermal_units_N1=thermal_units[1:N1]    
 
-    master_pb = twoROmodel.master_pb
+    master_pb = twoROmodel.master_pb.model
 
     N1 = instance.N1
 
@@ -391,9 +392,11 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
 
     if thermal_fixed_cost_val+result_continuous.objective >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
         
-        price_demand = get_price_demand_RO(twoROmodel, states_1, worst_case_continuous, instance)
+        # price_demand = get_price_demand_RO(twoROmodel, states_1, worst_case_continuous, instance)
 
-        results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, states_1, worst_case_continuous)
+        # results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, states_1, worst_case_continuous)
+
+        results_price_relaxation = get_optimal_price_demand(twoROmodel, states_1, result_continuous.states_2_val, worst_case_continuous, instance)
 
         worst_case_cost_obj = results_price_relaxation.obj
 
@@ -402,7 +405,7 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
             add_cut = true
         end
 
-        # println(("heur", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + result_continuous.objective, thermal_fixed_cost_val+thermal_cost_val))
+        println(("heur", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + result_continuous.objective, thermal_fixed_cost_val+thermal_cost_val))
 
     end
 
@@ -413,9 +416,11 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
 
         worst_case_cost_obj = results_lagrangian.objective
 
-        price_demand = get_price_demand_RO(twoROmodel, states_1, results_lagrangian.worst_case, instance)
+        # price_demand = get_price_demand_RO(twoROmodel, states_1, results_lagrangian.worst_case, instance)
 
-        results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, states_1, results_lagrangian.worst_case)
+        # results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, states_1, results_lagrangian.worst_case)
+
+        results_price_relaxation = get_optimal_price_demand(twoROmodel, states_1, result_continuous.states_2_val, results_lagrangian.worst_case, instance)
 
         if thermal_fixed_cost_val+results_price_relaxation.obj >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
             _add_optimality_cuts_RO_bin(cb_data, master_pb, results_price_relaxation, instance, solution_gamma, current_intervals)
@@ -427,13 +432,13 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
 
         #Calcul des coefficients de la coupe
 
-        # cost_SB, sol_dual_var = get_SB_cut_RO(twoROmodel, solution_xN1, worst_case, instance)
+        results_SB = get_SB_cut_RO(twoROmodel, states_1, results_lagrangian.worst_case, instance)
 
-        # # println((thermal_fixed_cost_val, worst_case_cost_obj, cost_SB, thermal_cost_val))
-        # if thermal_fixed_cost_val+cost_SB >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-        #     _add_SB_cut(cb_data, master_pb, instance, solution_xN1, cost_SB, sol_dual_var)
-        #     add_cut = true
-        # end
+        println((thermal_fixed_cost_val, worst_case_cost_obj, results_SB.objective, thermal_cost_val))
+        if thermal_fixed_cost_val+results_SB.objective >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
+            _add_SB_cut(cb_data, twoROmodel, instance, states_1, results_SB.objective, results_SB.sol_dual_var_states_1)
+            add_cut = true
+        end
     end
 
     return update_UB, thermal_fixed_cost_val+worst_case_cost_obj, worst_case_cost_obj
@@ -563,18 +568,16 @@ function _add_lagrangian_optimality_cuts_RO_bin(cb_data, master_pb, instance::In
     # println(worst_case_cost_obj + sum(sol_dual_var[1][i,t] * (1 - solution_xN1[1][i,t+1]) for i in 1:N1 for t in 1:T))
 end
 
-function _add_SB_cut(cb_data, master_pb, instance::Instance, solution_xN1::Vector{Matrix{Float64}}, cost_SB::Float64, sol_dual_var::Vector{Dict{Tuple{Int64, Int64}, Float64}})
+function _add_SB_cut(cb_data, twoROmodel::twoRO, instance::Instance, states_1_val::Dict{Symbol, Float64}, cost_SB::Float64, sol_dual_states_1::Dict{Symbol, Float64})
 
     T= instance.TimeHorizon
     N1 = instance.N1
-    is_on = master_pb[:is_on]
-    start_up = master_pb[:start_up]
-    start_down = master_pb[:start_down]
-    thermal_cost=master_pb[:thermal_cost]
+    states_1 = twoROmodel.master_pb.states_1
+    thermal_cost=twoROmodel.master_pb.model[:thermal_cost]
 
-    cstr=@build_constraint(cost_SB + sum(sol_dual_var[1][i,t] * (is_on[i,t] - solution_xN1[1][i,t+1]) + sol_dual_var[2][i,t] * (start_up[i,t] - solution_xN1[2][i,t]) + sol_dual_var[3][i,t] * (start_down[i,t] - solution_xN1[3][i,t])  for i in 1:N1 for t in 1:T) <= thermal_cost) #attention 0 ou 1:T ?
-    MOI.submit(master_pb, MOI.LazyConstraint(cb_data), cstr)
-    # println("add_lagrangian_cut :", cost_SB)
+    cstr=@build_constraint(cost_SB + sum(sol_dual_states_1[name] * (var - states_1_val[name]) for (name, var) in states_1) <= thermal_cost) #attention 0 ou 1:T ?
+    MOI.submit(twoROmodel.master_pb.model, MOI.LazyConstraint(cb_data), cstr)
+    println("add_lagrangian_cut :", cost_SB)
 end
 
 
@@ -903,6 +906,7 @@ function get_price_demand_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float
     JuMP.optimize!(subproblem.model)
 
     obj = JuMP.objective_value(subproblem.model)
+    println(obj)
     bound = JuMP.objective_bound(subproblem.model)
 
     price_demand = Matrix{Float64}(undef, T, length(Buses))
@@ -969,6 +973,13 @@ function solve_price_relaxation(twoROmodel::twoRO, instance::Instance, price_dem
 
     JuMP.optimize!(model1)
 
+    gradient1 = Matrix{Float64}(undef, T, length(Buses))
+    for t in 1:T
+        for b in Buses
+            gradient1[t,b] = sum(JuMP.value(power1[i,t]) for i in 1:N1 if thermal_units[i].Bus==b; init = 0) + JuMP.value(power_shedding1[b,t]) - JuMP.value(power_curtailement1[b,t]) + sum(JuMP.value(flow1[(line.id, t)]) for line in Lines if line.b2==b; init = 0) - sum(JuMP.value(flow1[(line.id, t)]) for line in Lines if line.b1==b; init = 0)
+        end
+    end
+
     dual_muup = JuMP.dual.(muup)
     dual_mudown = JuMP.dual.(mudown)
     
@@ -992,63 +1003,53 @@ function solve_price_relaxation(twoROmodel::twoRO, instance::Instance, price_dem
     JuMP.optimize!(model2)
     obj2 = JuMP.objective_value(model2)
 
+    gradient2 = Matrix{Float64}(undef, T, length(Buses))
+    for t in 1:T
+        for b in Buses
+            gradient2[t,b] = sum(JuMP.value(power2[i,t]) for i in 1:N2 if thermal_units[i+N1].Bus==b; init = 0)
+        end
+    end
+
     JuMP.set_objective_function(model2, primal_obj2)
 
     intercept = sum(price_demand[t,b] * instance.Demandbus[b][t]*(1+1.96*0.025*worst_case[Symbol("uncertainty[$t]")]) for b in Buses for t in 1:T)
 
-    return ResultsPriceRelaxation(obj1+obj2+intercept, dual_muup, dual_mudown, price_demand)
+    gradient = - gradient1 - gradient2
+
+    return ResultsPriceRelaxation(obj1+obj2+intercept, dual_muup, dual_mudown, price_demand, gradient)
 end
 
-function get_SB_cut_RO(twoROmodel::twoRO, solution_xN1::Vector{Matrix{Float64}}, solution_uncertainty::Dict{Int64, Float64}, instance::Instance)
+function get_SB_cut_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, worst_case::Dict{Symbol, Float64}, instance::Instance)
     """
     Get worst-case cost from Lagrangian relaxation
     """
     subproblem = twoROmodel.subproblem
 
-    is_on = subproblem.is_on
-    start_up = subproblem.start_up
-    start_down = subproblem.start_down
+    states_1 = subproblem.states_1
     uncertainty = subproblem.uncertainty
 
     T= instance.TimeHorizon
-    N = instance.N
     N1 = instance.N1
-    N2 = instance.N - N1
 
-    solution_is_on = solution_xN1[1]
 
-    for i in 1:N1
-        for t in 0:T
-            fix(is_on[i,t], solution_xN1[1][i,t+1]; force=true)
-        end
-        for t in 1:T
-            JuMP.fix(start_up[i,t], solution_xN1[2][i,t]; force=true)
-            JuMP.fix(start_down[i,t], solution_xN1[3][i,t]; force=true)
-        end
+    for (name, var) in states_1
+        fix(var, states_1_val[name]; force=true)
     end
 
-    for t in 1:T
-        fix(uncertainty[t], solution_uncertainty[t]; force=true)
+    for (name, var) in uncertainty
+        fix(var, worst_case[name]; force=true)
     end
 
     undo_relax = JuMP.relax_integrality(subproblem.model)
 
     JuMP.optimize!(subproblem.model)
 
-    sol_dual_var_is_on = Dict((i,t) => JuMP.dual(JuMP.FixRef(is_on[i,t])) for i in 1:N1 for t in 0:T)
-    sol_dual_var_start_up = Dict((i,t) => JuMP.dual(JuMP.FixRef(start_up[i,t])) for i in 1:N1 for t in 1:T)
-    sol_dual_var_start_down = Dict((i,t) => JuMP.dual(JuMP.FixRef(start_down[i,t])) for i in 1:N1 for t in 1:T)
+    sol_dual_var_states_1 = Dict(name => JuMP.dual(JuMP.FixRef(var)) for (name, var) in states_1)
 
     undo_relax()
 
-    for i in 1:N1
-        for t in 0:T
-            JuMP.unfix(is_on[i,t])
-        end
-        for t in 1:T
-            JuMP.unfix(start_up[i,t])
-            JuMP.unfix(start_down[i,t])
-        end
+    for (_, var) in states_1
+        JuMP.unfix(var)
     end
 
     primal_obj = JuMP.objective_function(subproblem.model)
@@ -1056,25 +1057,105 @@ function get_SB_cut_RO(twoROmodel::twoRO, solution_xN1::Vector{Matrix{Float64}},
     JuMP.set_objective_function(
         subproblem.model,
         @expression(subproblem.model, primal_obj + sum(
-            sol_dual_var_is_on[i,t] * (solution_xN1[1][i,t+1] - is_on[i,t]) for
-            i in 1:N1 for t in 0:T) + sum(
-            sol_dual_var_start_up[i,t] * (solution_xN1[2][i,t] - start_up[i,t]) for
-            i in 1:N1 for t in 1:T) + sum(
-            sol_dual_var_start_down[i,t] * (solution_xN1[3][i,t] - start_down[i,t]) for
-            i in 1:N1 for t in 1:T))
+            sol_dual_var_states_1[name] * (states_1_val[name] - var) for
+            (name, var) in states_1))
     )
 
     JuMP.optimize!(subproblem.model)
 
     bound = JuMP.objective_bound(subproblem.model)
 
-    sol_dual_var = [sol_dual_var_is_on, sol_dual_var_start_up, sol_dual_var_start_down]
-
-    for t in 1:T
-        JuMP.unfix(uncertainty[t])
+    for (_, var) in uncertainty
+        JuMP.unfix(var)
     end
 
     JuMP.set_objective_function(subproblem.model, primal_obj)
 
-    return bound, sol_dual_var
+    return (objective = bound, sol_dual_var_states_1 = sol_dual_var_states_1)
+end
+
+function get_optimal_price_demand(twoROmodel::twoRO, states_1::Dict{Symbol, Float64}, states_2::Dict{Symbol, Float64}, worst_case::Dict{Symbol, Float64}, instance::Instance)
+    """
+    Get worst-case cost from Lagrangian relaxation
+    """
+
+    T = instance.TimeHorizon
+    Buses = 1:size(instance.Next)[1]
+
+    priceproblem = twoROmodel.priceRelaxation.price_problem
+
+    dual_demand = priceproblem.dual_demand
+
+    cstr = priceproblem.upper_constraint
+
+    for (name, var) in priceproblem.dual_var_states_1
+        set_normalized_coefficient(cstr, var, -states_1[name])
+    end
+
+    for (name, var) in priceproblem.dual_var_states_2
+        set_normalized_coefficient(cstr, var, -states_2[name])
+    end
+
+    LB = 0.0
+    UB = 1e9
+    k = 0
+
+    primal_obj = JuMP.objective_function(priceproblem.model)
+
+    new_obj_function = @expression(priceproblem.model, primal_obj + sum(dual_demand[t,b] * instance.Demandbus[b][t]*(1+1.96*0.025*worst_case[Symbol("uncertainty[$t]")]) for b in Buses for t in 1:T))
+
+    JuMP.set_objective_function(
+        priceproblem.model,
+        new_obj_function
+    )
+
+    constraints = ConstraintRef[]
+
+    start = time()
+    while 100*(UB-LB)/UB > 0.1 && k <= 50
+        # println((k, LB, UB, 100*(UB-LB)/UB))
+        k += 1
+
+        JuMP.optimize!(priceproblem.model)
+
+        current_obj = JuMP.objective_value(priceproblem.model)
+
+        UB = current_obj
+
+        price_demand = JuMP.value.(dual_demand)
+
+        results_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, states_1, worst_case)
+
+        LB = max(LB, results_relaxation.obj)
+
+        # println((k, LB, UB, 100*(UB-LB)/UB))
+
+        intercept = sum(price_demand[t,b] * instance.Demandbus[b][t]*(1+1.96*0.025*worst_case[Symbol("uncertainty[$t]")]) for b in Buses for t in 1:T)
+
+        # println(sum(results_relaxation.gradient[t,b] * price_demand[t,b] for b in Buses for t in 1:T))
+        
+        if 100*(UB-LB)/UB > 0.1 && k <= 50
+            cstr = @constraint(priceproblem.model, priceproblem.theta <= results_relaxation.obj - intercept + sum(results_relaxation.gradient[t,b] * (dual_demand[t,b] - price_demand[t,b]) for b in Buses for t in 1:T))
+            push!(constraints, cstr)
+        else
+            println((k, LB, UB, 100*(UB-LB)/UB))
+            JuMP.set_objective_function(priceproblem.model, primal_obj)
+            for cstr in constraints
+                delete(priceproblem.model, cstr)
+            end
+
+            println(time() - start)
+            return results_relaxation
+        end
+    end
+
+    price_demand = JuMP.value.(dual_demand)
+
+    JuMP.set_objective_function(priceproblem.model, primal_obj)
+
+    for cstr in constraints
+        delete(priceproblem.model, cstr)
+    end
+
+    return (LB = LB, UB = UB, price_demand = price_demand)
 end
