@@ -71,15 +71,33 @@ mutable struct MasterPbRO
     states_1::Dict{Symbol, VariableRef}
 end
 
+mutable struct LagrangianStatesRO
+    model::Model
+    theta::VariableRef
+    upper_constraint::Union{Nothing, JuMP.ConstraintRef}
+    dual_var_states_1::Dict{Symbol, VariableRef}
+    dual_var_states_2::Dict{Symbol, VariableRef}
+    dual_var_uncertainty::Dict{Symbol, VariableRef}
+end
+
+struct optionsRO
+    WorstCaseStrategy::String
+end
+
+Enumeration = optionsRO("Enumeration")
+CuttingPlane = optionsRO("CuttingPlane")
+
 mutable struct twoRO
     master_pb::MasterPbRO
     lagrangian::LagrangianRO
     subproblem::subproblemRO
     oracleContinuousRO::oracleContinuousRO
     priceRelaxation::priceRelaxationRO
+    lagrangianStates::LagrangianStatesRO
+    options::optionsRO
 end
 
-function master_RO_bin_problem_extended(instance; silent=true)
+function master_RO_bin_problem_extended(instance, gap; silent=true)
     """
     Initial master problem in the risk neutral 3-bin formulation
     """
@@ -90,7 +108,8 @@ function master_RO_bin_problem_extended(instance; silent=true)
     end
 
     set_optimizer_attribute(model, "Threads", 1)
-    set_optimizer_attribute(model, "TimeLimit", 5)
+    newgap=gap/100
+    set_optimizer_attribute(model, "MIPGap", newgap)
 
     T= instance.TimeHorizon
     N=instance.N    
@@ -319,7 +338,7 @@ function builder_RO(instance; Γ=0)
             demand=cstr_demand)
 end
 
-function Lagrangian_RO_problem(instance; silent=true, Γ=0)
+function Lagrangian_RO_problem(instance, gap; silent=true, Γ=0)
     """
     Initial master problem in the risk neutral 3-bin formulation
     """
@@ -387,6 +406,8 @@ function Lagrangian_RO_problem(instance; silent=true, Γ=0)
     set_optimizer(md, instance.optimizer)    
     set_optimizer_attribute(md, "Threads", 1)
     set_optimizer_attribute(md, "TimeLimit", 20)
+    newgap=gap/100
+    set_optimizer_attribute(md, "MIPGap", newgap)
     if silent
         set_silent(md)
     end
@@ -396,7 +417,7 @@ function Lagrangian_RO_problem(instance; silent=true, Γ=0)
     return LagrangianRO(md, theta, upper_cstr, ξ, dual_var_states_1, dual_var_states_2, dual_var_uncertainty, dual_demand, vars)
 end
 
-function subproblemRO(instance, Γ)
+function subproblemRO(instance, gap, Γ)
 
     build = builder_RO(instance; Γ=Γ)
     model = build.model
@@ -408,7 +429,9 @@ function subproblemRO(instance, Γ)
     set_silent(model)
 
     set_optimizer_attribute(model, "Threads", 1)
-    set_optimizer_attribute(model, "TimeLimit", 5)
+    set_optimizer_attribute(model, "TimeLimit", 10)
+    newgap=gap/100
+    set_optimizer_attribute(model, "MIPGap", newgap)
 
     return subproblemRO(model, states_1, states_2, uncertainty_var, demand)
 end
@@ -750,4 +773,68 @@ function get_price_problem(instance)
     set_silent(md)
     
     return priceProblemRO(md, theta, upper_cstr, dual_var_states_1, dual_var_states_2, dual_demand)
+end
+
+
+function LagrangianStatesRO_problem(instance; silent=true, Γ=0)
+    """
+    Initial master problem in the risk neutral 3-bin formulation
+    """
+
+    T= instance.TimeHorizon
+    Next=instance.Next
+    Buses=1:size(Next)[1]
+
+    build = builder_RO(instance; Γ=Γ)
+    model = build.model
+    states_1 = build.states_1
+    states_2 = build.states_2
+    uncertainty_var = build.uncertainty
+
+    undo_relax = JuMP.relax_integrality(model)
+    new_model, _ = safe_copy(model)
+    undo_relax()
+
+    copy_states_1 = Dict()
+    for (name, _) in states_1
+        copy_states_1[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+    copy_states_2 = Dict()
+    for (name, _) in states_2
+        copy_states_2[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+    copy_uncertainty = Dict()
+    for (name, _) in uncertainty_var
+        copy_uncertainty[name] = JuMP.variable_by_name(new_model, string(name))
+    end
+
+    @constraint(new_model, fix_states_1[name in keys(copy_states_1)], copy_states_1[name] == 0.0)
+    @constraint(new_model, fix_states_2[name in keys(copy_states_2)], copy_states_2[name] == 0.0)
+    @constraint(new_model, fix_uncertainty[name in keys(copy_uncertainty)], copy_uncertainty[name] == 0.0)
+
+    md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+
+    hexpr = JuMP.objective_function(md)
+    theta = @variable(
+        md,
+        base_name = "theta",
+    )
+    upper_cstr = @constraint(md, theta <= hexpr)
+
+    dual_var_states_1 = Dict(name => md[Symbol("dual_var_fix_states_1[$name]")] for name in keys(copy_states_1))
+    dual_var_states_2 = Dict(name => md[Symbol("dual_var_fix_states_2[$name]")] for name in keys(copy_states_2))
+    dual_var_uncertainty = Dict(name => md[Symbol("dual_var_fix_uncertainty[$name]")] for name in keys(copy_uncertainty))
+
+    JuMP.set_objective_function(
+        md,
+            @expression(md, theta),
+    )
+
+    set_optimizer(md, instance.optimizer)    
+    set_optimizer_attribute(md, "Threads", 1)
+    set_optimizer_attribute(md, "TimeLimit", 10)
+
+    set_silent(md)
+    
+    return LagrangianStatesRO(md, theta, upper_cstr, dual_var_states_1, dual_var_states_2, dual_var_uncertainty)
 end

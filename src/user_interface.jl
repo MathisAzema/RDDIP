@@ -662,8 +662,8 @@ struct WorstcaseStrategy
     name::String
 end
 
-Enumeration = WorstcaseStrategy("Enumeration")
-Lagrangian = WorstcaseStrategy("Lagrangian")
+# Enumeration = WorstcaseStrategy("Enumeration")
+# Lagrangian = WorstcaseStrategy("Lagrangian")
 
 mutable struct Node{T}
     # The index of the node in the policy graph.

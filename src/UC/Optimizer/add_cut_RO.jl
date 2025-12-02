@@ -99,8 +99,6 @@ function _add_optimality_cuts_RO(cb_data, master_pb, oracle_pb::oracleRO, instan
     mudown = JuMP.value.(oracle_pb.dual_down)
     price = JuMP.value.(oracle_pb.dual_demand)
 
-    println(price[:, 1])
-
     for unit in thermal_units
         price_unit=price[:, unit.Bus]
         for (a,b) in unit.intervals
@@ -255,7 +253,7 @@ function solve_second_stage_RO(twoROmodel::twoRO, states_1::Dict{Symbol, Float64
     obj = JuMP.objective_value(subproblem.model)
     bound = JuMP.objective_bound(subproblem.model)
 
-    states_2_val = Dict{Symbol, Float64}(name => JuMP.value(var) for (name, var) in subproblem.states_2)
+    states_2_val = Dict{Symbol, Float64}(name => round(JuMP.value(var)) for (name, var) in subproblem.states_2)
 
     for (_, var) in subproblem.states_1
         JuMP.unfix(var)
@@ -350,14 +348,48 @@ function solve_second_stage_RO_lagrangianUncertainty(twoROmodel::twoRO, states_1
     return (objective = obj, worst_case = worst_case)
 end
 
-function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_subproblem, states_1::Dict{Symbol, Float64}, solution_gamma::Dict{Tuple{Int64, Int64, Int64}, Float64}; gap)
+function solve_second_stage_RO_lagrangianStates(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, dual_states_1::Dict{Symbol, Float64}, solution_uncertainty::Dict{Symbol, Float64})
+    """
+    Get worst-case cost from Lagrangian relaxation
+    """
+    subproblem = twoROmodel.subproblem
+
+    states_1 = subproblem.states_1
+
+    for (name, var) in subproblem.uncertainty
+        fix(var, solution_uncertainty[name]; force=true)
+    end
+
+    primal_obj = JuMP.objective_function(subproblem.model)
+
+    JuMP.set_objective_function(
+        subproblem.model,
+        @expression(subproblem.model, primal_obj - sum(
+            dual_states_1[name] * states_1[name] for (name, _) in dual_states_1))
+    )
+
+    JuMP.optimize!(subproblem.model)
+
+    obj = JuMP.objective_value(subproblem.model)
+    bound = JuMP.objective_bound(subproblem.model)
+
+    states_1_case = Dict(name => round(JuMP.value(var)) for (name, var) in states_1)
+
+    JuMP.set_objective_function(subproblem.model, primal_obj)
+    
+    for (_, var) in subproblem.uncertainty
+        JuMP.unfix(var)
+    end
+
+    return (objective = obj, bound = bound, states_1 = states_1_case)
+end
+
+function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_subproblem, states_1::Dict{Symbol, Float64}, solution_gamma::Dict{Tuple{Int64, Int64, Int64}, Float64}, Γ; gap)
     """
     Add Benders' cut
     """
     # println("Add cut RO bin")
-    T= instance.TimeHorizon
     thermal_units=instance.Thermalunits
-    N = instance.N
     N1 = instance.N1
     thermal_units_N1=thermal_units[1:N1]    
 
@@ -405,14 +437,19 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
             add_cut = true
         end
 
-        println(("heur", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + result_continuous.objective, thermal_fixed_cost_val+thermal_cost_val))
+        # println(("heur", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + result_continuous.objective, thermal_fixed_cost_val+thermal_cost_val))
 
     end
 
     if !add_cut
         update_UB = true
         # println("Compute worst-case Lagrangian Uncertainty ", thermal_fixed_cost_val + thermal_cost_val, " ", thermal_fixed_cost_val+obj_continuous)
-        results_lagrangian = get_worst_case_RO_lagrangianUncertainty_callback(twoROmodel, states_1, result_continuous.states_2_val)
+
+        if twoROmodel.options == CuttingPlane
+            results_lagrangian = get_worst_case_RO_lagrangianUncertainty_callback(twoROmodel, states_1, result_continuous.states_2_val)
+        elseif twoROmodel.options == Enumeration
+            results_lagrangian = get_worst_case_RO_enumeration(twoROmodel, states_1, instance, Γ)
+        end
 
         worst_case_cost_obj = results_lagrangian.objective
 
@@ -428,105 +465,23 @@ function add_cut_RO_bin(cb_data, twoROmodel::twoRO, instance::Instance, Time_sub
         end
 
         # println(("callback", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + results_lagrangian.objective, thermal_fixed_cost_val+thermal_cost_val))
-        println(("callback2", add_cut, thermal_fixed_cost_val, results_price_relaxation.obj, results_lagrangian.objective, thermal_cost_val))
+        # println(("callback2", add_cut, thermal_fixed_cost_val, results_price_relaxation.obj, results_lagrangian.objective, thermal_cost_val))
 
         #Calcul des coefficients de la coupe
 
-        results_SB = get_SB_cut_RO(twoROmodel, states_1, results_lagrangian.worst_case, instance)
+        # results_SB = get_SB_cut_RO(twoROmodel, states_1, results_lagrangian.worst_case)
 
-        println((thermal_fixed_cost_val, worst_case_cost_obj, results_SB.objective, thermal_cost_val))
-        if thermal_fixed_cost_val+results_SB.objective >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-            _add_SB_cut(cb_data, twoROmodel, instance, states_1, results_SB.objective, results_SB.sol_dual_var_states_1)
-            add_cut = true
-        end
-    end
+        # println((thermal_fixed_cost_val, worst_case_cost_obj, results_SB.objective, thermal_cost_val))
+        # if thermal_fixed_cost_val+results_SB.objective >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
+        #     _add_SB_cut(cb_data, twoROmodel, states_1, results_SB.objective, results_SB.sol_dual_var_states_1)
+        #     add_cut = true
+        # end
 
-    return update_UB, thermal_fixed_cost_val+worst_case_cost_obj, worst_case_cost_obj
-    
-end
+        results_L = get_lagrangian_cut(twoROmodel, states_1, result_continuous.states_2_val, results_lagrangian.worst_case)
 
-function add_cut_RO_bin2(cb_data, twoROmodel::twoRO, instance::Instance, Time_subproblem, solution_xN1::Vector{Matrix{Float64}}, solution_gamma::Dict{Tuple{Int64, Int64, Int64}, Float64}, Γ; gap)
-    """
-    Add Benders' cut
-    """
-    # println("Add cut RO bin")
-    T= instance.TimeHorizon
-    thermal_units=instance.Thermalunits
-    N = instance.N
-    N1 = instance.N1
-    thermal_units_N1=thermal_units[1:N1]    
-
-    master_pb = twoROmodel.master_pb
-
-    N1 = instance.N1
-
-    thermal_cost=master_pb[:thermal_cost]
-    thermal_fixed_cost=master_pb[:thermal_fixed_cost]
-
-    thermal_cost_val=callback_value(cb_data, thermal_cost)
-    thermal_fixed_cost_val=callback_value(cb_data, thermal_fixed_cost)
-
-    current_intervals=Dict{Int, Vector{Tuple{Int, Int}}}()
-    for unit in thermal_units_N1
-        current_intervals[unit.name] = Vector{Tuple{Int, Int}}[]
-        for (a,b) in unit.intervals
-            if solution_gamma[unit.name, a,b]>=0.9 
-                push!(current_intervals[unit.name], (a,b))
-            end
-        end
-    end
-
-
-    worst_case_continuous = get_worst_case_RO_continuous(twoROmodel, solution_xN1, instance)
-
-    obj_continuous, bound, solution_xN2 = solve_second_stage_RO(twoROmodel, solution_xN1, worst_case_continuous, instance)
-
-    add_cut = false
-
-    update_UB = false
-
-    if thermal_fixed_cost_val+obj_continuous >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-        worst_case = worst_case_continuous
-        
-        obj, bound, price_demand = get_price_demand_RO(twoROmodel, solution_xN1, worst_case, instance)
-
-        results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, solution_xN1, worst_case)
-
-        worst_case_cost_obj = results_price_relaxation.obj
-
-        if thermal_fixed_cost_val+results_price_relaxation.obj >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-            _add_optimality_cuts_RO_bin(cb_data, master_pb, results_price_relaxation, instance, solution_gamma, current_intervals)
-            add_cut = true
-        end
-
-        # println(("heur", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + obj_continuous, thermal_fixed_cost_val+thermal_cost_val))
-
-    end
-
-    if !add_cut
-        update_UB = true
-        # println("Compute worst-case Lagrangian Uncertainty ", thermal_fixed_cost_val + thermal_cost_val, " ", thermal_fixed_cost_val+obj_continuous)
-        worst_case_cost_obj, worst_case = get_worst_case_RO_enumeration(twoROmodel, solution_xN1, instance, Γ)
-
-        obj, bound, price_demand = get_price_demand_RO(twoROmodel, solution_xN1, worst_case, instance)
-
-        results_price_relaxation = solve_price_relaxation(twoROmodel, instance, price_demand, solution_xN1, worst_case)
-
-        if thermal_fixed_cost_val+results_price_relaxation.obj >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-            _add_optimality_cuts_RO_bin(cb_data, master_pb, results_price_relaxation, instance, solution_gamma, current_intervals)
-            add_cut = true
-        end
-
-        # println(("callback", add_cut, thermal_fixed_cost_val, thermal_fixed_cost_val + results_price_relaxation.obj, thermal_fixed_cost_val + worst_case_cost_obj, thermal_fixed_cost_val+thermal_cost_val))
-        # println(("callback2", add_cut, thermal_fixed_cost_val, results_price_relaxation.obj, worst_case_cost_obj, thermal_cost_val))
-
-        #Calcul des coefficients de la coupe
-
-        cost_SB, sol_dual_var = get_SB_cut_RO(twoROmodel, solution_xN1, worst_case, instance)
-
-        # println((thermal_fixed_cost_val, worst_case_cost_obj, cost_SB, thermal_cost_val))
-        if thermal_fixed_cost_val+cost_SB >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
-            _add_SB_cut(cb_data, master_pb, instance, solution_xN1, cost_SB, sol_dual_var)
+        # println((thermal_fixed_cost_val, worst_case_cost_obj, results_L.objective, thermal_cost_val))
+        if thermal_fixed_cost_val+results_L.objective >= (1+0.01*gap/100)*(thermal_fixed_cost_val+thermal_cost_val)
+            _add_SB_cut(cb_data, twoROmodel, states_1, results_L.objective, results_L.sol_dual_var_states_1)
             add_cut = true
         end
     end
@@ -540,17 +495,15 @@ function get_worst_case_RO_enumeration(twoROmodel::twoRO, states_1::Dict{Symbol,
     uncertainty_set = generate_all_Γ_tuple(T, Γ)
     worst_case_cost = -Inf
     worst_case = Dict{Int, Float64}()
-    start = time()
     for uncertainty in uncertainty_set
         uncertainty_dict = Dict(Symbol("uncertainty[$t]") => uncertainty[t]*1.0 for t in 1:T)
-        results = solve_second_stage_RO(twoROmodel, states_1, uncertainty_dict, instance)
+        results = solve_second_stage_RO(twoROmodel, states_1, uncertainty_dict)
         if results.objective > worst_case_cost
             worst_case_cost = results.objective
             worst_case = uncertainty_dict
         end
     end
-    println(time() - start)
-    return worst_case_cost, worst_case
+    return (objective = worst_case_cost_cost, worst_case = worst_case)
 end
 
 function _add_lagrangian_optimality_cuts_RO_bin(cb_data, master_pb, instance::Instance, solution_xN1::Vector{Matrix{Float64}}, worst_case_cost_obj::Float64, sol_dual_var::Vector{Dict{Tuple{Int64, Int64}, Float64}})
@@ -568,16 +521,13 @@ function _add_lagrangian_optimality_cuts_RO_bin(cb_data, master_pb, instance::In
     # println(worst_case_cost_obj + sum(sol_dual_var[1][i,t] * (1 - solution_xN1[1][i,t+1]) for i in 1:N1 for t in 1:T))
 end
 
-function _add_SB_cut(cb_data, twoROmodel::twoRO, instance::Instance, states_1_val::Dict{Symbol, Float64}, cost_SB::Float64, sol_dual_states_1::Dict{Symbol, Float64})
+function _add_SB_cut(cb_data, twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, cost_SB::Float64, sol_dual_states_1::Dict{Symbol, Float64})
 
-    T= instance.TimeHorizon
-    N1 = instance.N1
     states_1 = twoROmodel.master_pb.states_1
     thermal_cost=twoROmodel.master_pb.model[:thermal_cost]
 
     cstr=@build_constraint(cost_SB + sum(sol_dual_states_1[name] * (var - states_1_val[name]) for (name, var) in states_1) <= thermal_cost) #attention 0 ou 1:T ?
     MOI.submit(twoROmodel.master_pb.model, MOI.LazyConstraint(cb_data), cstr)
-    println("add_lagrangian_cut :", cost_SB)
 end
 
 
@@ -702,11 +652,6 @@ function get_worst_case_RO_lagrangian_callback(twoROmodel::twoRO, solution_xN1::
             current_obj = callback_value(cb_data, new_obj_function)
 
             obj, bound, sol_state, worst_case = solve_second_stage_RO_lagrangian(twoROmodel, instance, sol_dual_state, sol_dual_uncertainty)
-
-            tm= [t for t in 1:T if worst_case[t]>0.1]
-
-
-            println((tm, current_obj, current_obj + obj - theta_val, obj, theta_val))
 
             if obj<= 0.999999*theta_val
 
@@ -842,7 +787,6 @@ function get_worst_case_RO_lagrangianUncertainty_callback(twoROmodel::twoRO, sta
 
             if current_obj + obj - theta_val>= 0.999999*LB
                 LB=current_obj + obj - theta_val
-                # println("LB : ", LB)
                 if k>=10 #Force to the new best solution after 10 iterations
                     vars= vcat(lagrangian.vars,
                         [lagrangian.theta])
@@ -860,9 +804,7 @@ function get_worst_case_RO_lagrangianUncertainty_callback(twoROmodel::twoRO, sta
     set_optimizer_attribute(lagrangian.model, "LazyConstraints", 1)
     MOI.set(lagrangian.model, Gurobi.CallbackFunction(), my_callback_function)
 
-    start = time()
     JuMP.optimize!(lagrangian.model)
-    println(time() - start)
 
     worst_case_cost_obj = JuMP.objective_value(lagrangian.model)
 
@@ -906,7 +848,6 @@ function get_price_demand_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float
     JuMP.optimize!(subproblem.model)
 
     obj = JuMP.objective_value(subproblem.model)
-    println(obj)
     bound = JuMP.objective_bound(subproblem.model)
 
     price_demand = Matrix{Float64}(undef, T, length(Buses))
@@ -1019,7 +960,7 @@ function solve_price_relaxation(twoROmodel::twoRO, instance::Instance, price_dem
     return ResultsPriceRelaxation(obj1+obj2+intercept, dual_muup, dual_mudown, price_demand, gradient)
 end
 
-function get_SB_cut_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, worst_case::Dict{Symbol, Float64}, instance::Instance)
+function get_SB_cut_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, worst_case::Dict{Symbol, Float64})
     """
     Get worst-case cost from Lagrangian relaxation
     """
@@ -1027,10 +968,6 @@ function get_SB_cut_RO(twoROmodel::twoRO, states_1_val::Dict{Symbol, Float64}, w
 
     states_1 = subproblem.states_1
     uncertainty = subproblem.uncertainty
-
-    T= instance.TimeHorizon
-    N1 = instance.N1
-
 
     for (name, var) in states_1
         fix(var, states_1_val[name]; force=true)
@@ -1111,9 +1048,7 @@ function get_optimal_price_demand(twoROmodel::twoRO, states_1::Dict{Symbol, Floa
 
     constraints = ConstraintRef[]
 
-    start = time()
     while 100*(UB-LB)/UB > 0.1 && k <= 50
-        # println((k, LB, UB, 100*(UB-LB)/UB))
         k += 1
 
         JuMP.optimize!(priceproblem.model)
@@ -1128,23 +1063,16 @@ function get_optimal_price_demand(twoROmodel::twoRO, states_1::Dict{Symbol, Floa
 
         LB = max(LB, results_relaxation.obj)
 
-        # println((k, LB, UB, 100*(UB-LB)/UB))
-
         intercept = sum(price_demand[t,b] * instance.Demandbus[b][t]*(1+1.96*0.025*worst_case[Symbol("uncertainty[$t]")]) for b in Buses for t in 1:T)
-
-        # println(sum(results_relaxation.gradient[t,b] * price_demand[t,b] for b in Buses for t in 1:T))
         
         if 100*(UB-LB)/UB > 0.1 && k <= 50
             cstr = @constraint(priceproblem.model, priceproblem.theta <= results_relaxation.obj - intercept + sum(results_relaxation.gradient[t,b] * (dual_demand[t,b] - price_demand[t,b]) for b in Buses for t in 1:T))
             push!(constraints, cstr)
         else
-            println((k, LB, UB, 100*(UB-LB)/UB))
             JuMP.set_objective_function(priceproblem.model, primal_obj)
             for cstr in constraints
                 delete(priceproblem.model, cstr)
             end
-
-            println(time() - start)
             return results_relaxation
         end
     end
@@ -1158,4 +1086,74 @@ function get_optimal_price_demand(twoROmodel::twoRO, states_1::Dict{Symbol, Floa
     end
 
     return (LB = LB, UB = UB, price_demand = price_demand)
+end
+
+function get_lagrangian_cut(twoROmodel::twoRO, states_1::Dict{Symbol, Float64}, states_2::Dict{Symbol, Float64}, worst_case::Dict{Symbol, Float64})
+    """
+    Get worst-case cost from Lagrangian relaxation
+    """
+
+    lagrangian = twoROmodel.lagrangianStates
+
+    cstr = lagrangian.upper_constraint
+
+    for (name, var) in lagrangian.dual_var_states_2
+        set_normalized_coefficient(cstr, var, -states_2[name])
+    end
+
+    for (name, var) in lagrangian.dual_var_uncertainty
+        set_normalized_coefficient(cstr, var, -worst_case[name])
+    end
+
+    primal_obj = JuMP.objective_function(lagrangian.model)
+
+    JuMP.set_objective_function(
+        lagrangian.model,
+        @expression(lagrangian.model, primal_obj + sum(
+            var * states_1[name] for
+            (name, var) in lagrangian.dual_var_states_1))
+    )
+
+    LB = 0.0
+    UB = 1e9
+    k = 0
+
+    dual_states_1_prev = Dict(name => 0.0 for (name, var) in lagrangian.dual_var_states_1)
+    best_dual_states_1 = Dict(name => 0.0 for (name, var) in lagrangian.dual_var_states_1)
+
+    constraints = ConstraintRef[]
+    MaxIter = 50
+    while 100*(UB-LB)/UB > 0.1 && k <= MaxIter
+        k += 1
+
+        JuMP.optimize!(lagrangian.model)
+
+        current_obj = JuMP.objective_value(lagrangian.model)
+
+        UB = current_obj
+
+        dual_states_1 = Dict(name => JuMP.value(var) for (name, var) in lagrangian.dual_var_states_1)
+        theta_val = JuMP.value(lagrangian.theta)
+
+        results_subproblem = solve_second_stage_RO_lagrangianStates(twoROmodel, states_1, dual_states_1, worst_case)
+
+        if current_obj - theta_val + results_subproblem.bound > LB
+            LB = current_obj - theta_val + results_subproblem.bound
+            best_dual_states_1 = dual_states_1
+        end
+        
+        if 100*(UB-LB)/UB > 0.1 && k <= MaxIter && sum(abs(dual_states_1[name]-dual_states_1_prev[name]) for (name, _) in lagrangian.dual_var_states_1) > 1e-6
+            dual_states_1_prev = dual_states_1
+            cstr = @constraint(lagrangian.model, lagrangian.theta <= results_subproblem.objective + sum(
+                results_subproblem.states_1[name] * (dual_states_1[name] - lagrangian.dual_var_states_1[name]) for
+                (name, var) in lagrangian.dual_var_states_1))
+            push!(constraints, cstr)
+        else
+            JuMP.set_objective_function(lagrangian.model, primal_obj)
+            for cstr in constraints
+                delete(lagrangian.model, cstr)
+            end
+            return (objective = LB, bound = UB, iteration = k, sol_dual_var_states_1 = dual_states_1)
+        end
+    end
 end
