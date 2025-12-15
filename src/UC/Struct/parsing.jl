@@ -11,7 +11,8 @@ function parse_nc4(name_instance, optimizer, T=24; N1=5)
     demand=round.(data_block["ActivePowerDemand"].var[:])
     N=size(keys(data_block.group))[1]-1
     # N=2
-    Thermal_units=Vector{ThermalUnit}(undef, N)
+    Thermal_units_v1=Vector{ThermalUnit}(undef, N)
+    Thermal_units_v2=Vector{ThermalUnit}(undef, N)
     Hydro_units=Dict()
     k=0
     for unit in data_block.group
@@ -40,31 +41,19 @@ function parse_nc4(name_instance, optimizer, T=24; N1=5)
                     Tdown=Int64(1+floor((MaxPower-MinPower)/DeltaRampDown))
 
                     unit=ThermalUnit(unit_name, Bus, MinPower, MaxPower, DeltaRampUp, DeltaRampDown, QuadTerm, StartUpCost, StartDownCost, LinearTerm, ConstTerm, InitialPower, InitUpDownTime, Int64(MinUpTime), Int64(MinDownTime), intervals, Tup, Tdown)
-                    Thermal_units[unit_name]=unit
-                end
-                if type == "HydroUnitBlock"
-                    StartArc=last(unit)["StartArc"].var[:]
-                    EndArc =last(unit)["EndArc"].var[:]
-                    Inflows  =last(unit)["Inflows"].var[:, :]
-                    InitialVolumetric  =last(unit)["InitialVolumetric"].var[:]
-                    MinVolumetric =last(unit)["MinVolumetric"].var[:,:] 
-                    MaxVolumetric=last(unit)["MaxVolumetric"].var[:,:]  
-                    UphillFlow=last(unit)["UphillFlow"].var[:]  
-                    DownhillFlow=last(unit)["DownhillFlow"].var[:]  
-                    InitialFlowRate=last(unit)["InitialFlowRate"].var[:]  
-                    DeltaRampUp =last(unit)["DeltaRampUp"].var[:,:] 
-                    DeltaRampDown=last(unit)["DeltaRampDown"].var[:,:]  
-                    MinFlow=last(unit)["MinFlow"].var[:,:]
-                    MaxFlow=last(unit)["MaxFlow"].var[:,:]
-                    MinPower=last(unit)["MinPower"].var[:,:]
-                    MaxPower=last(unit)["MaxPower"].var[:,:]
-                    NumberPieces=last(unit)["NumberPieces"].var[:] 
-                    LinearTerm=last(unit)["LinearTerm"].var[:]  
-                    ConstTerm=last(unit)["ConstantTerm"].var[:]
-                    Hydro_units[unit_name]=HydroUnit(unit_name, StartArc, EndArc, Inflows, InitialVolumetric, MinVolumetric, MaxVolumetric, UphillFlow, DownhillFlow, InitialFlowRate, DeltaRampUp, DeltaRampDown, MinFlow, MaxFlow, MinPower, MaxPower, NumberPieces, LinearTerm, ConstTerm)
+                    Thermal_units_v1[unit_name]=unit
                 end
             end
         end
+    end
+    H = [Thermal_units_v1[i].LinearTerm for i in 1:N]
+    idx_sort = sortperm(H; rev=false)
+    println(idx_sort)
+    for (k,i) in enumerate(idx_sort)
+        unit = Thermal_units_v1[i]
+        intervals=set_intervals(Int64(unit.MinUpTime), unit.InitUpDownTime, unit.InitialPower, unit.MaxPower, unit.MinPower, unit.DeltaRampDown)
+        unit2=ThermalUnit(k, unit.Bus, unit.MinPower, unit.MaxPower, unit.DeltaRampUp, unit.DeltaRampDown, unit.QuadTerm, unit.StartUpCost, unit.StartDownCost, unit.LinearTerm, unit.ConstTerm, unit.InitialPower, unit.InitUpDownTime, Int64(unit.MinUpTime), Int64(unit.MinDownTime), intervals, unit.Tup, unit.Tdown)
+        Thermal_units_v2[k]=unit2
     end
     Buses=1:1
     Next=[[]]
@@ -96,7 +85,7 @@ function parse_nc4(name_instance, optimizer, T=24; N1=5)
     push!(Training_set, [day for day in Nb_total_scenario_training+1:Nb_total_scenario_training+Nb_total_scenario_test])
     WGscenario=[hcat(WGscenariob...)]
     model_Q_jab=Dict{Tuple{Int64, Int64, Int64}, JuMP.Model}()
-    return Instance(name_instance, TimeHorizon, N, N1, Thermal_units, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
+    return Instance(name_instance, TimeHorizon, N, N1, Thermal_units_v2, Lines, Next, Demandbus, BusWind, WGscenario, Training_set, Test_set, optimizer, model_Q_jab)
 end
 
 function parse_IEEE_JEAS(folder, optimizer; N1=35, NumWind=91)

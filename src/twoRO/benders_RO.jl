@@ -10,6 +10,8 @@ function benders_RO_callback(instance;silent=true, Γ=0, force=1, gap=0.05, time
 
     master_pb=master_RO_problem_extended(instance, silent=silent)
     oracle_pb = oracle_RO_problem(instance; silent=true, Γ=Γ)
+
+    # return oracle_pb
     
     infty=1e9
     LB=1
@@ -80,7 +82,7 @@ function benders_RO_callback(instance;silent=true, Γ=0, force=1, gap=0.05, time
 
         println((value(master_pb[:thermal_fixed_cost]), value(master_pb[:thermal_cost])))
 
-        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, states_2_val
+        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, states_2_val, JuMP.value.(master_pb[:is_on])
     else
         return Time_subproblem
     end
@@ -97,14 +99,7 @@ function benders_RO_bin_callback(instance, options;silent=true, Γ=0, force=1, g
     thermal_units=values(instance.Thermalunits)
     thermal_units_N1=thermal_units[1:N1]
 
-    master_pb_RO=master_RO_bin_problem_extended(instance, gap, silent=silent)
-    lagrangian = Lagrangian_RO_problem(instance, gap; silent=true, Γ=Γ)
-    subproblem = subproblemRO(instance, gap, Γ)
-    oracleContinuousRO = oracle_Continuous_RO_problem(instance; silent=true, Γ=Γ)
-    pricerelaxation = initialize_price_relaxation(instance)
-    lagrangianStates = LagrangianStatesRO_problem(instance; silent=true, Γ=Γ)
-
-    twoROmodel = twoRO(master_pb_RO, lagrangian, subproblem, oracleContinuousRO, pricerelaxation, lagrangianStates, options)
+    twoROmodel = initialize_twoROmodel(instance, gap, Γ, options, silent)
     master_pb = twoROmodel.master_pb.model
 
     # return twoROmodel
@@ -174,8 +169,29 @@ function benders_RO_bin_callback(instance, options;silent=true, Γ=0, force=1, g
 
         states_1_val = Dict(Symbol("is_on[$i,$t]") => JuMP.value(master_pb[:is_on][i,t]) for i in 1:N1, t in 0:T)
 
-        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, Time_subproblem, gap, force, Γ, k
+        solution_gamma = Dict{Tuple{Int, Int, Int}, Float64}()
+        gamma_val=round.(value.(master_pb[:gamma]))
+        for unit in thermal_units_N1
+            for (a,b) in unit.intervals
+                solution_gamma[unit.name,a,b]=gamma_val[unit.name, [a,b]]
+            end
+        end
+
+        return instance.name, computation_time, objective_value(master_pb), objective_bound(master_pb), states_1_val, Time_subproblem, gap, force, Γ, k, solution_gamma
     else
         return nothing
     end
+end
+
+function initialize_twoROmodel(instance, gap, Γ, options, silent)
+    master_pb_RO=master_RO_bin_problem_extended(instance, gap, silent=silent)
+    lagrangian = Lagrangian_RO_problem(instance, gap; silent=true, Γ=Γ)
+    subproblem = subproblemRO(instance, gap, Γ)
+    subproblemextended = subproblemROextended(instance, gap, Γ)
+    oracleContinuousRO = oracle_Continuous_RO_problem(instance; silent=true, Γ=Γ)
+    pricerelaxation = initialize_price_relaxation(instance)
+    lagrangianStates = LagrangianStatesRO_problem(instance; silent=true, Γ=Γ)
+
+    twoROmodel = twoRO(master_pb_RO, lagrangian, subproblem, subproblemextended, oracleContinuousRO, pricerelaxation, lagrangianStates, options)
+    return twoROmodel
 end

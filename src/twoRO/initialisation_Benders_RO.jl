@@ -91,6 +91,7 @@ mutable struct twoRO
     master_pb::MasterPbRO
     lagrangian::LagrangianRO
     subproblem::subproblemRO
+    subproblemextended::subproblemRO
     oracleContinuousRO::oracleContinuousRO
     priceRelaxation::priceRelaxationRO
     lagrangianStates::LagrangianStatesRO
@@ -110,6 +111,7 @@ function master_RO_bin_problem_extended(instance, gap; silent=true)
     set_optimizer_attribute(model, "Threads", 1)
     newgap=gap/100
     set_optimizer_attribute(model, "MIPGap", newgap)
+    set_optimizer_attribute(model, "Presolve", 0)
 
     T= instance.TimeHorizon
     N=instance.N    
@@ -266,6 +268,139 @@ function oracle_RO_problem(instance; silent=true, Γ=0)
     return oracleRO(md, dual_var_is_on, dual_var_start_up, dual_var_start_down, dual_var_uncertainty, dual_demand, dual_up, dual_down)
 end
 
+function oracle_RO_problem2(instance; silent=true, Γ=0)
+    """
+    Initial master problem in the risk neutral 3-bin formulation
+    """
+
+    model = Model(instance.optimizer)
+    if silent
+        set_silent(model)
+    end
+
+    set_optimizer_attribute(model, "Threads", 1)
+    set_optimizer_attribute(model, "TimeLimit", 5)
+
+    T= instance.TimeHorizon
+    N=instance.N    
+    Next=instance.Next
+    Buses=1:size(Next)[1]
+    Lines=values(instance.Lines)
+    Numlines=length(instance.Lines)
+    thermal_units=instance.Thermalunits
+
+    @variable(model, is_on[i in 1:N, t in 0:T], Bin)
+    @variable(model, start_up[i in 1:N, t in 1:T], Bin)
+    @variable(model, start_down[i in 1:N, t in 1:T], Bin)
+
+    @variable(model, thermal_fuel_cost>=0)
+
+    @variable(model, power[i in 1:N, t in 0:T]>=0)
+    @variable(model, power_shedding[b in Buses, t in 1:T]>=0)
+    @variable(model, power_curtailement[b in Buses, t in 1:T]>=0)
+
+    @variable(model, uncertainty[t in 1:T], Bin)
+
+    @constraint(model, sum(uncertainty[t] for t in 1:T) <= Γ)
+
+    @variable(model, flow[l in 1:Numlines, t in 1:T])  
+    @variable(model, θ[b in Buses, t in 1:T])  
+    
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]<=line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]>=-line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]==line.B12*(θ[line.b1,t]-θ[line.b2,t]))
+
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]>=unit.MinPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]<=unit.MaxPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units; unit.InitialPower!=nothing], power[unit.name, 0]==unit.InitialPower)
+
+    @constraint(model,  muup[i in 1:N, t in 1:T], -(power[i, t]-power[i, t-1]) >= -((-thermal_units[i].DeltaRampUp)*start_up[i, t]+(thermal_units[i].MinPower+thermal_units[i].DeltaRampUp)*is_on[i, t]-(thermal_units[i].MinPower)*is_on[i, t-1]))
+    @constraint(model,  mudown[i in 1:N, t in 1:T], -(power[i, t-1]-power[i, t]) >= -((-thermal_units[i].DeltaRampDown)*start_down[i, t]+(thermal_units[i].MinPower+thermal_units[i].DeltaRampDown)*is_on[i, t-1]-(thermal_units[i].MinPower)*is_on[i, t]))
+
+    @constraint(model, thermal_fuel_cost >= sum(unit.LinearTerm*power[unit.name, t] for unit in thermal_units for t in 1:T)+sum(SHEDDING_COST*power_shedding[b,t]+CURTAILEMENT_COST*power_curtailement[b,t] for b in Buses for t in 1:T))
+
+    @constraint(model,  demand[t in 1:T, b in Buses], sum(power[unit.name, t] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t]-power_curtailement[b,t] + sum(flow[line.id, t] for line in Lines if line.b2==b) - sum(flow[line.id, t] for line in Lines if line.b1==b) == instance.Demandbus[b][t]*(1+1.96*0.025*uncertainty[t]))
+
+    @objective(model, Min, thermal_fuel_cost)
+
+    undo_relax = JuMP.relax_integrality(model)
+    new_model, _ = safe_copy(model)
+    undo_relax()
+
+    copy_is_on = Dict()
+    copy_start_up = Dict()
+    copy_start_down = Dict()
+    copy_uncertainty = Dict()
+    for i in 1:N
+        for t in 0:T
+            copy_is_on[i,t] = JuMP.variable_by_name(new_model, string("is_on[",i,",",t,"]"))
+        end
+    end
+    for i in 1:N
+        for t in 1:T
+            copy_start_up[i,t] = JuMP.variable_by_name(new_model, string("start_up[",i,",",t,"]"))
+            copy_start_down[i,t] = JuMP.variable_by_name(new_model, string("start_down[",i,",",t,"]"))
+        end
+    end
+    for t in 1:T
+        copy_uncertainty[t] = JuMP.variable_by_name(new_model, string("uncertainty[",t,"]"))
+    end
+
+    primal_obj = JuMP.objective_function(new_model)
+
+    λ_max = sum([SHEDDING_COST * instance.Demandbus[b][t]*(1+0.025*1.96) for b in Buses for t in 1:T])
+    λ_max = 5000
+    println(λ_max)
+
+    JuMP.set_objective_function(
+        new_model,
+            @expression(new_model, primal_obj + λ_max * sum(copy_uncertainty[t] for t in 1:T)),
+    )
+
+    @constraint(new_model, fix_is_on[i in 1:N, t in 0:T], copy_is_on[i, t] == 0.0)
+    @constraint(new_model, fix_start_up[i in 1:N, t in 1:T], copy_start_up[i, t] == 0.0)
+    @constraint(new_model, fix_start_down[i in 1:N, t in 1:T], copy_start_down[i, t] == 0.0)
+
+    md=dualize(new_model; consider_constrained_variables=false, dual_names = DualNames("dual_var_", "dual_con_"))
+
+    hexpr = JuMP.objective_function(md)
+    theta = @variable(
+        md,
+        base_name = "theta",
+    )
+    @constraint(md, theta <= hexpr)
+
+    dual_var_is_on = Dict((i,t) => md[Symbol("dual_var_fix_is_on[$i,$t]")] for (i,t) in keys(copy_is_on))
+    dual_var_start_up = Dict((i,t) => md[Symbol("dual_var_fix_start_up[$i,$t]")] for (i,t) in keys(copy_start_up))
+    dual_var_start_down = Dict((i,t) => md[Symbol("dual_var_fix_start_down[$i,$t]")] for (i,t) in keys(copy_start_down))
+    dual_demand = [md[Symbol("dual_var_demand[$t,$b]")] for t in 1:T, b in Buses]
+    dual_up = [md[Symbol("dual_var_muup[$i,$t]")] for i in 1:N, t in 1:T]
+    dual_down = [md[Symbol("dual_var_mudown[$i,$t]")] for i in 1:N, t in 1:T]
+
+    @variable(md, uncertainty[1:T], Bin)
+    @constraint(md, sum(uncertainty[t] for t in 1:T) <= Γ)
+
+    JuMP.set_objective_function(
+        md,
+            @expression(md, theta + λ_max * sum(uncertainty[t] for t in 1:T)),
+    )
+
+    for t in 1:T
+        cstr = md[Symbol("dual_con_uncertainty[$t]")]
+        JuMP.set_normalized_coefficient(cstr, uncertainty[t], 2*λ_max)
+    end
+    
+    set_optimizer(md, instance.optimizer)    
+    set_optimizer_attribute(md, "Threads", 1)
+    set_optimizer_attribute(md, "TimeLimit", 5)
+    if silent
+        set_silent(md)
+    end
+    
+    return oracleRO(md, dual_var_is_on, dual_var_start_up, dual_var_start_down, Float64[], dual_demand, dual_up, dual_down)
+end
+
+
 function builder_RO(instance; Γ=0)
     model = Model(instance.optimizer)
 
@@ -405,7 +540,7 @@ function Lagrangian_RO_problem(instance, gap; silent=true, Γ=0)
 
     set_optimizer(md, instance.optimizer)    
     set_optimizer_attribute(md, "Threads", 1)
-    set_optimizer_attribute(md, "TimeLimit", 20)
+    set_optimizer_attribute(md, "TimeLimit", 200)
     newgap=gap/100
     set_optimizer_attribute(md, "MIPGap", newgap)
     if silent
@@ -837,4 +972,105 @@ function LagrangianStatesRO_problem(instance; silent=true, Γ=0)
     set_silent(md)
     
     return LagrangianStatesRO(md, theta, upper_cstr, dual_var_states_1, dual_var_states_2, dual_var_uncertainty)
+end
+
+function builder_RO_extended(instance; Γ=0)
+    model = Model(instance.optimizer)
+
+    # set_silent(model)
+
+    T= instance.TimeHorizon
+    N=instance.N    
+    N1 = instance.N1
+    Next=instance.Next
+    Buses=1:size(Next)[1]
+    Lines=values(instance.Lines)
+    Numlines=length(instance.Lines)
+    thermal_units=instance.Thermalunits
+    thermal_unitsN1=instance.Thermalunits[1:N1]
+
+    # @variable(model, is_on[i in 1:N, t in 0:T], Bin)
+    # @variable(model, start_up[i in 1:N, t in 1:T], Bin)
+    # @variable(model, start_down[i in 1:N, t in 1:T], Bin)
+
+    @variable(model, 0<=is_on[i in 1:N, t in 0:T]<=1)
+    @variable(model, 0<=start_up[i in 1:N, t in 1:T]<=1)
+    @variable(model, 0<=start_down[i in 1:N, t in 1:T]<=1)
+
+    @variable(model, thermal_fixed_cost>=0)
+
+    thermal_unit_commit_constraints(model, instance)
+    @constraint(model, thermal_fixed_cost>=sum(unit.ConstTerm*is_on[unit.name, t]+unit.StartUpCost*start_up[unit.name, t]+unit.StartDownCost*start_down[unit.name, t] for unit in thermal_units for t in 1:T if unit.name > N1))
+
+    @variable(model, gamma[i in 1:N1, (a,b) in instance.Thermalunits[i].intervals]>=0)
+    @constraint(model, [unit in thermal_unitsN1, t in 1:T], sum(gamma[unit.name, [a,b]] for (a,b) in unit.intervals if a<=t<b)==is_on[unit.name,t])
+    @constraint(model, [unit in thermal_unitsN1, t in 1:T], sum(gamma[unit.name, [a,b]] for (a,b) in unit.intervals if a==t)==start_up[unit.name,t])
+    @constraint(model, [unit in thermal_unitsN1, t in 1:T], sum(gamma[unit.name, [a,b]] for (a,b) in unit.intervals if b==t)==start_down[unit.name,t])
+
+    @variable(model, thermal_fuel_cost>=0)
+
+    @variable(model, power[i in 1:N, t in 0:T]>=0)
+    @variable(model, power_shedding[b in Buses, t in 1:T]>=0)
+    @variable(model, power_curtailement[b in Buses, t in 1:T]>=0)
+
+    # @variable(model, uncertainty[t in 1:T]>=0)
+    @variable(model, uncertainty[t in 1:T], Bin) #Binary is very more efficient here to learn \mu
+
+    @constraint(model, sum(uncertainty[t] for t in 1:T) <= Γ)
+
+    @variable(model, flow[l in 1:Numlines, t in 1:T])  
+    @variable(model, θ[b in Buses, t in 1:T])  
+    
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]<=line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]>=-line.Fmax)
+    @constraint(model, [line in Lines, t in 1:T], flow[line.id,t]==line.B12*(θ[line.b1,t]-θ[line.b2,t]))
+
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]>=unit.MinPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units, t in 0:T], power[unit.name, t]<=unit.MaxPower*is_on[unit.name, t])
+    @constraint(model,  [unit in thermal_units; unit.InitialPower!=nothing], power[unit.name, 0]==unit.InitialPower)
+
+    @constraint(model,  muup[i in 1:N, t in 1:T], -(power[i, t]-power[i, t-1]) >= -((-thermal_units[i].DeltaRampUp)*start_up[i, t]+(thermal_units[i].MinPower+thermal_units[i].DeltaRampUp)*is_on[i, t]-(thermal_units[i].MinPower)*is_on[i, t-1]))
+    @constraint(model,  mudown[i in 1:N, t in 1:T], -(power[i, t-1]-power[i, t]) >= -((-thermal_units[i].DeltaRampDown)*start_down[i, t]+(thermal_units[i].MinPower+thermal_units[i].DeltaRampDown)*is_on[i, t-1]-(thermal_units[i].MinPower)*is_on[i, t]))
+
+    @constraint(model, thermal_fuel_cost >= thermal_fixed_cost + sum(unit.LinearTerm*power[unit.name, t] for unit in thermal_units for t in 1:T)+sum(SHEDDING_COST*power_shedding[b,t]+CURTAILEMENT_COST*power_curtailement[b,t] for b in Buses for t in 1:T))
+
+    @constraint(model,  demand[t in 1:T, b in Buses], sum(power[unit.name, t] for unit in thermal_units if unit.Bus==b)+power_shedding[b,t]-power_curtailement[b,t] + sum(flow[line.id, t] for line in Lines if line.b2==b) - sum(flow[line.id, t] for line in Lines if line.b1==b) == instance.Demandbus[b][t]*(1+1.96*0.025*uncertainty[t]))
+
+    @objective(model, Min, thermal_fuel_cost)
+
+    states_1 = Dict(Symbol("gamma[$i,[$a, $b]]") => gamma[i,[a,b]] for i in 1:N1 for (a,b) in instance.Thermalunits[i].intervals)
+    states_2 = Dict(Symbol("is_on[$i,$t]") => is_on[i,t] for i in N1+1:N, t in 0:T)
+    uncertainty_var = Dict(Symbol("uncertainty[$t]") => uncertainty[t] for t in 1:T)
+
+    cstr_demand = Matrix{ConstraintRef}(undef, T, length(Buses))
+    for t in 1:T
+        for b in Buses
+            cstr_demand[t,b] = demand[t,b]
+        end
+    end
+
+    return (model = model,
+            states_1 = states_1,
+            states_2 = states_2,
+            uncertainty = uncertainty_var,
+            demand=cstr_demand)
+end
+
+function subproblemROextended(instance, gap, Γ)
+
+    build = builder_RO_extended(instance; Γ=Γ)
+    model = build.model
+    states_1 = build.states_1
+    states_2 = build.states_2
+    uncertainty_var = build.uncertainty
+    demand = build.demand
+
+    # set_silent(model)
+
+    set_optimizer_attribute(model, "Threads", 1)
+    set_optimizer_attribute(model, "TimeLimit", 60)
+    newgap=gap/100
+    set_optimizer_attribute(model, "MIPGap", newgap)
+
+    return subproblemRO(model, states_1, states_2, uncertainty_var, demand)
 end
